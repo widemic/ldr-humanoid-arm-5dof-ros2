@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: humanoid_arm_description
+    relative_path: urdf/humanoid_arm_5dof_ros2_control.urdf.xacro
+  srdf:
+    relative_path: config/humanoid_arm_5dof.srdf
+  package_settings:
+    author_name: Andrei Dragomir
+    author_email: widemic@gmail.com
+    generated_timestamp: 1759178397
