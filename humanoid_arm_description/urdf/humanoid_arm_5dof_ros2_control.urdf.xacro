@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="humanoid_arm_5dof">
+
+  <!-- Import main URDF -->
+  <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof_macro.urdf.xacro"/>
+
+  <!-- Import ros2_control configuration -->
+  <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof.ros2_control.xacro"/>
+
+  <!-- Import Gazebo configuration -->
+  <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof.gazebo.xacro"/>
+
+  <!-- Parameters -->
+  <xacro:arg name="use_fake_hardware" default="true"/>
+  <xacro:arg name="fake_sensor_commands" default="false"/>
+  <xacro:arg name="slowdown" default="3.0"/>
+  <xacro:arg name="robot_controller" default="joint_trajectory_controller"/>
+
+  <!-- Instantiate the robot -->
+  <xacro:humanoid_arm_5dof_macro
+    prefix=""
+    use_fake_hardware="$(arg use_fake_hardware)"
+    fake_sensor_commands="$(arg fake_sensor_commands)"
+    slowdown="$(arg slowdown)"
+    robot_controller="$(arg robot_controller)" />
+
+</robot>

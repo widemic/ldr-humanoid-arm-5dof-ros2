@@ -1,0 +1,29 @@
+# ROS2 / Colcon
+build/
+install/
+log/
+*.pyc
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+*.egg-info/
+dist/
+*.egg
+
+# Gazebo
+.gazebo/
+
+# Logs
+*.log
+
+# Temporary files
+*.bak
+*.tmp

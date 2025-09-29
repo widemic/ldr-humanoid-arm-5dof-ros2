@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="humanoid_arm_5dof_gazebo" params="prefix">
+
+    <!-- Gazebo-specific link properties -->
+    <gazebo reference="${prefix}base_link">
+      <material>Gazebo/Grey</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}upper_arm_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_pitch_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}forearm_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_flange_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_base_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_assembly_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_roll_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_effector_link">
+      <material>Gazebo/Orange</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_motor_link">
+      <material>Gazebo/Blue</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <!-- Contact sensors for whole-arm manipulation -->
+    <gazebo reference="${prefix}forearm_link">
+      <sensor name="${prefix}forearm_contact_sensor" type="contact">
+        <plugin name="${prefix}gazebo_ros_bumper_controller" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/humanoid_arm</namespace>
+            <remapping>bumper_states:=${prefix}forearm_contact</remapping>
+          </ros>
+          <frame_name>${prefix}forearm_contact_link</frame_name>
+        </plugin>
+        <always_on>1</always_on>
+        <update_rate>50.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_link">
+      <sensor name="${prefix}wrist_contact_sensor" type="contact">
+        <plugin name="${prefix}gazebo_ros_wrist_bumper_controller" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/humanoid_arm</namespace>
+            <remapping>bumper_states:=${prefix}wrist_contact</remapping>
+          </ros>
+          <frame_name>${prefix}wrist_contact_link</frame_name>
+        </plugin>
+        <always_on>1</always_on>
+        <update_rate>50.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_effector_link">
+      <sensor name="${prefix}tcp_contact_sensor" type="contact">
+        <plugin name="${prefix}gazebo_ros_tcp_bumper_controller" filename="libgazebo_ros_bumper.so">
+          <ros>
+            <namespace>/humanoid_arm</namespace>
+            <remapping>bumper_states:=${prefix}tcp_contact</remapping>
+          </ros>
+          <frame_name>${prefix}tcp_link</frame_name>
+        </plugin>
+        <always_on>1</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <!-- Force-Torque sensors -->
+    <gazebo reference="${prefix}tcp_joint">
+      <sensor name="${prefix}tcp_ft_sensor" type="force_torque">
+        <plugin name="${prefix}gazebo_ros_ft_sensor" filename="libgazebo_ros_force.so">
+          <ros>
+            <namespace>/humanoid_arm</namespace>
+            <remapping>wrench:=${prefix}tcp_wrench</remapping>
+          </ros>
+          <frame_name>${prefix}tcp_link</frame_name>
+        </plugin>
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <!-- IMU sensor -->
+    <gazebo reference="${prefix}upper_arm_link">
+      <sensor name="${prefix}arm_imu_sensor" type="imu">
+        <plugin name="${prefix}gazebo_ros_imu_controller" filename="libgazebo_ros_imu_sensor.so">
+          <ros>
+            <namespace>/humanoid_arm</namespace>
+            <remapping>imu:=${prefix}arm_imu/data</remapping>
+          </ros>
+          <frame_name>${prefix}upper_arm_link</frame_name>
+        </plugin>
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
+        <imu>
+          <angular_velocity>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+
+    <!-- Gazebo ros2_control plugin -->
+    <gazebo>
+      <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+        <parameters>$(find humanoid_arm_control)/config/controllers.yaml</parameters>
+        <parameters>$(find humanoid_arm_description)/config/ros2_control.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+    <!-- Joint friction and damping -->
+    <gazebo reference="${prefix}base_rotation_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_pitch_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_pitch_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_roll_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+    </gazebo>
+
+    <!-- Physics properties for contact -->
+    <gazebo>
+      <physics type="ode">
+        <real_time_update_rate>1000.0</real_time_update_rate>
+        <max_step_size>0.001</max_step_size>
+        <real_time_factor>1</real_time_factor>
+        <ode>
+          <solver>
+            <type>quick</type>
+            <iters>150</iters>
+            <precon_iters>0</precon_iters>
+            <sor>1.400000</sor>
+            <use_dynamic_moi_rescaling>1</use_dynamic_moi_rescaling>
+          </solver>
+          <constraints>
+            <cfm>0.00001</cfm>
+            <erp>0.2</erp>
+            <contact_max_correcting_vel>2000.000000</contact_max_correcting_vel>
+            <contact_surface_layer>0.01000</contact_surface_layer>
+          </constraints>
+        </ode>
+      </physics>
+    </gazebo>
+
+  </xacro:macro>
+
+  <!-- Include the macro in the main URDF -->
+  <xacro:humanoid_arm_5dof_gazebo prefix="" />
+
+</robot>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<library path="humanoid_arm_control">
+  <class name="humanoid_arm_control/RobstrideSystemHardware" type="humanoid_arm_control::RobstrideSystemHardware" base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for Robstride motors used in 5-DOF humanoid arm.
+      Supports position, velocity, and effort control modes.
+      Includes contact force sensing capabilities for whole-arm manipulation.
+    </description>
+  </class>
+</library>

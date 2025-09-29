@@ -1,0 +1,124 @@
+humanoid_arm_5dof:
+  ros__parameters:
+    # Hardware interface parameters
+    use_fake_hardware: true
+    fake_sensor_commands: false
+    slowdown: 3.0
+
+    # Joint limits (safety limits tighter than URDF limits)
+    joint_limits:
+      base_rotation_joint:
+        has_position_limits: true
+        min_position: -3.0
+        max_position: 3.0
+        has_velocity_limits: true
+        max_velocity: 2.5
+        has_acceleration_limits: true
+        max_acceleration: 5.0
+        has_jerk_limits: true
+        max_jerk: 100.0
+
+      shoulder_pitch_joint:
+        has_position_limits: true
+        min_position: -0.5
+        max_position: 3.0
+        has_velocity_limits: true
+        max_velocity: 2.5
+        has_acceleration_limits: true
+        max_acceleration: 5.0
+        has_jerk_limits: true
+        max_jerk: 100.0
+
+      elbow_pitch_joint:
+        has_position_limits: true
+        min_position: -3.0
+        max_position: 3.0
+        has_velocity_limits: true
+        max_velocity: 1.4
+        has_acceleration_limits: true
+        max_acceleration: 3.0
+        has_jerk_limits: true
+        max_jerk: 60.0
+
+      wrist_pitch_joint:
+        has_position_limits: true
+        min_position: -0.25
+        max_position: 2.7
+        has_velocity_limits: true
+        max_velocity: 1.4
+        has_acceleration_limits: true
+        max_acceleration: 3.0
+        has_jerk_limits: true
+        max_jerk: 60.0
+
+      wrist_roll_joint:
+        has_position_limits: true
+        min_position: -3.0
+        max_position: 3.0
+        has_velocity_limits: true
+        max_velocity: 0.7
+        has_acceleration_limits: true
+        max_acceleration: 1.5
+        has_jerk_limits: true
+        max_jerk: 30.0
+
+    # Robstride motor specifications (for future hardware integration)
+    robstride_motors:
+      base_rotation_joint:
+        motor_id: 1
+        motor_type: "RMD-X8-PRO"
+        gear_ratio: 8.0
+        max_torque: 120.0  # Nm
+        max_speed: 3.0     # rad/s
+        encoder_resolution: 16384
+        can_id: 0x01
+
+      shoulder_pitch_joint:
+        motor_id: 2
+        motor_type: "RMD-X8-PRO"
+        gear_ratio: 8.0
+        max_torque: 120.0
+        max_speed: 3.0
+        encoder_resolution: 16384
+        can_id: 0x02
+
+      elbow_pitch_joint:
+        motor_id: 3
+        motor_type: "RMD-X6"
+        gear_ratio: 6.0
+        max_torque: 60.0
+        max_speed: 1.6
+        encoder_resolution: 16384
+        can_id: 0x03
+
+      wrist_pitch_joint:
+        motor_id: 4
+        motor_type: "RMD-X6"
+        gear_ratio: 6.0
+        max_torque: 60.0
+        max_speed: 1.6
+        encoder_resolution: 16384
+        can_id: 0x04
+
+      wrist_roll_joint:
+        motor_id: 5
+        motor_type: "RMD-X4"
+        gear_ratio: 4.0
+        max_torque: 17.0
+        max_speed: 0.8
+        encoder_resolution: 16384
+        can_id: 0x05
+
+    # CAN interface configuration (for real hardware)
+    can_interface:
+      interface_name: "can0"
+      bitrate: 1000000
+      timeout_ms: 10
+      retry_attempts: 3
+
+    # Contact sensing parameters
+    contact_sensing:
+      force_threshold: 5.0  # N
+      torque_threshold: 1.0 # Nm
+      contact_debounce_time: 0.1  # seconds
+      publish_rate: 100.0  # Hz

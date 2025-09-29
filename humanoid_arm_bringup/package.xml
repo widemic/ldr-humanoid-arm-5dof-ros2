@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>humanoid_arm_bringup</name>
+  <version>1.0.0</version>
+  <description>Launch files and configurations for 5-DOF humanoid arm system</description>
+
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <url type="website">https://github.com/your-username/humanoid-arm-5dof-ros2</url>
+  <url type="bugtracker">https://github.com/your-username/humanoid-arm-5dof-ros2/issues</url>
+  <url type="repository">https://github.com/your-username/humanoid-arm-5dof-ros2</url>
+
+  <author email="your.email@example.com">Your Name</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>humanoid_arm_description</exec_depend>
+  <exec_depend>humanoid_arm_control</exec_depend>
+  <exec_depend>humanoid_arm_moveit_config</exec_depend>
+  <exec_depend>humanoid_arm_teleop</exec_depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>ros2_control</exec_depend>
+  <exec_depend>ros2_controllers</exec_depend>
+
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros2_control</exec_depend>
+  <exec_depend>gazebo_plugins</exec_depend>
+
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

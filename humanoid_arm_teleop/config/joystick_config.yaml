@@ -1,0 +1,127 @@
+joystick_teleop:
+  ros__parameters:
+    # Controller settings
+    device_name: "/dev/input/js0"
+    publish_rate: 50.0  # Hz
+    deadzone: 0.1
+    scale_factor: 1.0
+
+    # Control modes
+    control_modes:
+      - "individual_joint"     # Mode 0: Individual joint control
+      - "end_effector_ik"      # Mode 1: End-effector Cartesian control
+      - "predefined_poses"     # Mode 2: Predefined pose selection
+      - "whole_arm_contact"    # Mode 3: Contact-based manipulation mode
+
+    default_mode: "individual_joint"
+
+    # Button mappings (PlayStation controller layout)
+    buttons:
+      deadman_switch: 4        # L1 - Must be held for any motion
+      emergency_stop: 5        # R1 - Emergency stop
+      mode_switch: 0           # X button - Cycle through control modes
+      home_position: 1         # Circle - Go to home position
+      ready_position: 2        # Square - Go to ready position
+      contact_mode_toggle: 3   # Triangle - Toggle contact sensing mode
+
+    # Individual joint control (Mode 0)
+    individual_joint_control:
+      # Left stick controls first two joints
+      base_rotation_axis: 0      # Left stick X
+      shoulder_pitch_axis: 1     # Left stick Y
+
+      # Right stick controls next two joints
+      elbow_pitch_axis: 2        # Right stick X
+      wrist_pitch_axis: 3        # Right stick Y
+
+      # Triggers/bumpers for wrist roll
+      wrist_roll_positive: 6     # R2
+      wrist_roll_negative: 7     # L2
+
+      # Velocity scaling for each joint
+      velocity_scaling:
+        base_rotation_joint: 1.0
+        shoulder_pitch_joint: 1.0
+        elbow_pitch_joint: 0.8
+        wrist_pitch_joint: 0.8
+        wrist_roll_joint: 0.6
+
+    # End-effector IK control (Mode 1)
+    end_effector_control:
+      # Left stick for X-Y translation
+      translation_x_axis: 0      # Left stick X
+      translation_y_axis: 1      # Left stick Y
+
+      # Right stick for Z translation and rotation
+      translation_z_axis: 3      # Right stick Y
+      rotation_z_axis: 2         # Right stick X
+
+      # Triggers for pitch and roll
+      rotation_y_axis: 6         # R2 - Pitch
+      rotation_x_axis: 7         # L2 - Roll
+
+      # Scaling factors
+      translation_scale: 0.5     # m/s
+      rotation_scale: 1.0        # rad/s
+
+      # IK solver settings
+      ik_timeout: 0.1            # seconds
+      position_tolerance: 0.01   # meters
+      orientation_tolerance: 0.1 # radians
+
+    # Predefined poses (Mode 2)
+    predefined_poses:
+      home:
+        joints: [0.0, 0.0, 0.0, 0.0, 0.0]
+        button: 8                # Share button
+
+      ready:
+        joints: [0.0, 1.57, -1.57, 0.0, 0.0]
+        button: 9                # Options button
+
+      reach_forward:
+        joints: [0.0, 0.5, -0.5, 0.5, 0.0]
+        button: 10               # Left stick press
+
+      reach_side:
+        joints: [1.57, 0.5, -0.5, 0.5, 0.0]
+        button: 11               # Right stick press
+
+    # Contact manipulation mode (Mode 3)
+    contact_manipulation:
+      # Force/torque thresholds for contact detection
+      force_threshold: 5.0       # N
+      torque_threshold: 1.0      # Nm
+
+      # Compliance parameters
+      position_compliance: 0.1   # How much to give way on contact
+      orientation_compliance: 0.05
+
+      # Contact approach speeds
+      approach_velocity: 0.1     # m/s
+      contact_velocity: 0.05     # m/s when in contact
+
+      # Safe retraction distance
+      retract_distance: 0.05     # m
+
+    # Safety limits
+    safety:
+      max_joint_velocity: [2.0, 2.0, 1.4, 1.4, 0.6]  # rad/s per joint
+      max_cartesian_velocity: 0.5                      # m/s
+      max_angular_velocity: 1.0                        # rad/s
+      collision_check: true
+      self_collision_check: true
+      workspace_limits:
+        x_min: 0.2
+        x_max: 2.0
+        y_min: -1.0
+        y_max: 1.0
+        z_min: 0.0
+        z_max: 2.0
+
+    # Visual/audio feedback
+    feedback:
+      visual_markers: true       # Show target markers in RViz
+      haptic_feedback: false     # Controller vibration (if supported)
+      audio_feedback: true       # Sound notifications
+      status_display: true       # Show current mode and status

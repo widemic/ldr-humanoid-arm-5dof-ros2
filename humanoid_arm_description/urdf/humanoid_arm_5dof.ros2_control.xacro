@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="humanoid_arm_5dof_ros2_control" params="name prefix use_fake_hardware:=true fake_sensor_commands:=false slowdown:=3.0 robot_controller:=joint_trajectory_controller">
+
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${use_fake_hardware}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="fake_sensor_commands">${fake_sensor_commands}</param>
+          <param name="state_following_offset">0.0</param>
+          <param name="slowdown">${slowdown}</param>
+        </xacro:if>
+        <xacro:unless value="${use_fake_hardware}">
+          <!-- Real Robstride hardware interface -->
+          <plugin>humanoid_arm_control/RobstrideHardwareInterface</plugin>
+          <param name="can_interface">can0</param>
+          <param name="motor_ids">[1, 2, 3, 4, 5]</param>
+          <param name="motor_types">["RMD-X8-PRO", "RMD-X8-PRO", "RMD-X6", "RMD-X6", "RMD-X4"]</param>
+          <param name="communication_timeout">0.01</param>
+          <param name="position_control_mode">true</param>
+          <param name="velocity_control_mode">true</param>
+          <param name="effort_control_mode">false</param>
+        </xacro:unless>
+      </hardware>
+
+      <!-- Base Rotation Joint (1st DOF) -->
+      <joint name="${prefix}base_rotation_joint">
+        <command_interface name="position">
+          <param name="min">-3.14</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">-3.0</param>
+          <param name="max">3.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- Shoulder Pitch Joint (2nd DOF) -->
+      <joint name="${prefix}shoulder_pitch_joint">
+        <command_interface name="position">
+          <param name="min">-0.55</param>
+          <param name="max">3.1</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">-3.0</param>
+          <param name="max">3.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- Elbow Pitch Joint (3rd DOF) -->
+      <joint name="${prefix}elbow_pitch_joint">
+        <command_interface name="position">
+          <param name="min">-3.14</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">-1.6</param>
+          <param name="max">1.6</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- Wrist Pitch Joint (4th DOF) -->
+      <joint name="${prefix}wrist_pitch_joint">
+        <command_interface name="position">
+          <param name="min">-0.31</param>
+          <param name="max">2.8</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">-1.6</param>
+          <param name="max">1.6</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- Wrist Roll Joint (5th DOF) -->
+      <joint name="${prefix}wrist_roll_joint">
+        <command_interface name="position">
+          <param name="min">-3.14</param>
+          <param name="max">3.14</param>
+        </command_interface>
+        <command_interface name="velocity">
+          <param name="min">-0.8</param>
+          <param name="max">0.8</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- Contact Force Sensors for Whole-Arm Manipulation -->
+      <sensor name="${prefix}forearm_force_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+        <param name="frame_id">${prefix}forearm_contact_link</param>
+      </sensor>
+
+      <sensor name="${prefix}wrist_force_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+        <param name="frame_id">${prefix}wrist_contact_link</param>
+      </sensor>
+
+      <sensor name="${prefix}tcp_force_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+        <param name="frame_id">${prefix}tcp_link</param>
+      </sensor>
+
+      <!-- IMU Sensor for arm stabilization -->
+      <sensor name="${prefix}arm_imu">
+        <state_interface name="orientation.x"/>
+        <state_interface name="orientation.y"/>
+        <state_interface name="orientation.z"/>
+        <state_interface name="orientation.w"/>
+        <state_interface name="angular_velocity.x"/>
+        <state_interface name="angular_velocity.y"/>
+        <state_interface name="angular_velocity.z"/>
+        <state_interface name="linear_acceleration.x"/>
+        <state_interface name="linear_acceleration.y"/>
+        <state_interface name="linear_acceleration.z"/>
+        <param name="frame_id">${prefix}upper_arm_link</param>
+      </sensor>
+
+    </ros2_control>
+
+  </xacro:macro>
+
+</robot>
