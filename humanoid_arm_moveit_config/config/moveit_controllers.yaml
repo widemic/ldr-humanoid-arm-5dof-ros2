@@ -14,3 +14,5 @@ moveit_simple_controller_manager:
       - elbow_pitch_joint
       - wrist_pitch_joint
       - wrist_roll_joint
+    action_ns: follow_joint_trajectory
+    default: true

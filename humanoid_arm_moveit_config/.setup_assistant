@@ -7,4 +7,23 @@ moveit_setup_assistant_config:
   package_settings:
     author_name: Andrei Dragomir
     author_email: widemic@gmail.com
-    generated_timestamp: 1759178397
+    generated_timestamp: 1759179528
+  control_xacro:
+    command:
+      - position
+      - velocity
+    state:
+      - position
+      - velocity
+      - effort
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+      - velocity
+    state:
+      - position
+      - velocity
+      - effort

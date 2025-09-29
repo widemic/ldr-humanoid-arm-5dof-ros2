@@ -19,7 +19,10 @@ humanoid_5dof_arm_controller:
       - wrist_pitch_joint
       - wrist_roll_joint
     command_interfaces:
-      []
+      - position
+      - velocity
     state_interfaces:
-      []
+      - position
+      - velocity
+      - effort
     allow_nonzero_velocity_at_trajectory_end: true
