@@ -7,8 +7,11 @@
   <!-- Import ros2_control configuration -->
   <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof.ros2_control.xacro"/>
 
-  <!-- Import Gazebo configuration -->
-  <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof.gazebo.xacro"/>
+  <!-- Import Gazebo Harmonic configuration -->
+  <xacro:include filename="$(find humanoid_arm_description)/urdf/humanoid_arm_5dof.gazebo_harmonic.xacro"/>
+
+  <!-- Instantiate Gazebo macro -->
+  <xacro:humanoid_arm_5dof_gazebo_harmonic prefix=""/>
 
   <!-- Parameters -->
   <xacro:arg name="use_fake_hardware" default="true"/>

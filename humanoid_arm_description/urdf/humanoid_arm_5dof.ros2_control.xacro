@@ -12,15 +12,8 @@
           <param name="slowdown">${slowdown}</param>
         </xacro:if>
         <xacro:unless value="${use_fake_hardware}">
-          <!-- Real Robstride hardware interface -->
-          <plugin>humanoid_arm_control/RobstrideHardwareInterface</plugin>
-          <param name="can_interface">can0</param>
-          <param name="motor_ids">[1, 2, 3, 4, 5]</param>
-          <param name="motor_types">["RMD-X8-PRO", "RMD-X8-PRO", "RMD-X6", "RMD-X6", "RMD-X4"]</param>
-          <param name="communication_timeout">0.01</param>
-          <param name="position_control_mode">true</param>
-          <param name="velocity_control_mode">true</param>
-          <param name="effort_control_mode">false</param>
+          <!-- Gazebo Harmonic hardware interface for simulation -->
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </xacro:unless>
       </hardware>
 

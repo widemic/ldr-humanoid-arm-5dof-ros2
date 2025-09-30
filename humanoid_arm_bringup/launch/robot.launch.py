@@ -102,7 +102,7 @@ def launch_setup(context, *args, **kwargs):
 
     # RViz
     rviz_config_file_path = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_description'),
+        FindPackageShare('humanoid_arm_bringup'),
         'config',
         rviz_config_file
     ])
@@ -180,7 +180,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'rviz_config_file',
-            default_value='humanoid_arm_5dof.rviz',
+            default_value='view_robot.rviz',
             description='RViz config file (absolute path) to use when launching rviz.',
         )
     )

@@ -1,0 +1,335 @@
+# Robstride Motor Specifications and PID Parameters
+# Each actuator has realistic dynamics simulation
+
+actuators:
+  base_rotation_joint:
+    motor:
+      type: "RMD-X8-PRO"
+      manufacturer: "Robstride"
+      model: "X8 PRO"
+      can_id: 0x01
+
+      # Physical specs
+      rated_voltage: 48.0  # V
+      rated_current: 15.0  # A
+      peak_current: 30.0   # A
+
+      # Mechanical specs
+      gear_ratio: 8.0
+      gear_efficiency: 0.85
+      motor_constant_kt: 0.115  # Nm/A (torque constant)
+      motor_constant_ke: 0.115  # V·s/rad (back-EMF constant)
+      motor_resistance: 0.18    # Ohm
+      motor_inductance: 0.00015 # H
+      rotor_inertia: 0.000025   # kg·m²
+
+      # Performance limits (at output shaft, after gearbox)
+      max_torque: 120.0      # Nm
+      rated_torque: 80.0     # Nm (continuous)
+      max_speed: 3.0         # rad/s
+      rated_speed: 2.5       # rad/s
+
+      # Encoder
+      encoder_type: "Magnetic Absolute"
+      encoder_resolution: 16384  # counts per revolution
+      encoder_accuracy: 0.001    # rad
+
+      # Dynamics
+      friction_viscous: 0.5     # Nm·s/rad (damping)
+      friction_coulomb: 2.0     # Nm (static friction)
+      backlash: 0.0005         # rad
+
+      # Thermal
+      thermal_time_constant: 900  # seconds (15 min)
+      max_temperature: 85.0       # °C
+
+    # PID Controller Parameters (Position Control)
+    pid_position:
+      p: 150.0
+      i: 5.0
+      d: 8.0
+      i_clamp_min: -20.0
+      i_clamp_max: 20.0
+      antiwindup: true
+
+    # PID Controller Parameters (Velocity Control)
+    pid_velocity:
+      p: 8.0
+      i: 2.0
+      d: 0.5
+      i_clamp_min: -10.0
+      i_clamp_max: 10.0
+      antiwindup: true
+
+    # Feedforward gains
+    feedforward:
+      velocity: 0.1
+      acceleration: 0.05
+
+    # Communication
+    communication:
+      timeout_ms: 10
+      retry_attempts: 3
+      update_rate_hz: 1000
+
+  shoulder_pitch_joint:
+    motor:
+      type: "RMD-X8-PRO"
+      manufacturer: "Robstride"
+      model: "X8 PRO"
+      can_id: 0x02
+
+      rated_voltage: 48.0
+      rated_current: 15.0
+      peak_current: 30.0
+
+      gear_ratio: 8.0
+      gear_efficiency: 0.85
+      motor_constant_kt: 0.115
+      motor_constant_ke: 0.115
+      motor_resistance: 0.18
+      motor_inductance: 0.00015
+      rotor_inertia: 0.000025
+
+      max_torque: 120.0
+      rated_torque: 80.0
+      max_speed: 3.0
+      rated_speed: 2.5
+
+      encoder_type: "Magnetic Absolute"
+      encoder_resolution: 16384
+      encoder_accuracy: 0.001
+
+      friction_viscous: 0.6     # Higher due to gravity loading
+      friction_coulomb: 2.5
+      backlash: 0.0005
+
+      thermal_time_constant: 900
+      max_temperature: 85.0
+
+    pid_position:
+      p: 180.0  # Higher gain due to gravity
+      i: 8.0
+      d: 10.0
+      i_clamp_min: -25.0
+      i_clamp_max: 25.0
+      antiwindup: true
+
+    pid_velocity:
+      p: 10.0
+      i: 3.0
+      d: 0.8
+      i_clamp_min: -15.0
+      i_clamp_max: 15.0
+      antiwindup: true
+
+    feedforward:
+      velocity: 0.12
+      acceleration: 0.08
+      gravity_compensation: 1.0  # Enable gravity compensation
+
+    communication:
+      timeout_ms: 10
+      retry_attempts: 3
+      update_rate_hz: 1000
+
+  elbow_pitch_joint:
+    motor:
+      type: "RMD-X6"
+      manufacturer: "Robstride"
+      model: "X6"
+      can_id: 0x03
+
+      rated_voltage: 48.0
+      rated_current: 10.0
+      peak_current: 20.0
+
+      gear_ratio: 6.0
+      gear_efficiency: 0.85
+      motor_constant_kt: 0.095
+      motor_constant_ke: 0.095
+      motor_resistance: 0.22
+      motor_inductance: 0.00018
+      rotor_inertia: 0.000015
+
+      max_torque: 60.0
+      rated_torque: 40.0
+      max_speed: 1.6
+      rated_speed: 1.4
+
+      encoder_type: "Magnetic Absolute"
+      encoder_resolution: 16384
+      encoder_accuracy: 0.001
+
+      friction_viscous: 0.4
+      friction_coulomb: 1.5
+      backlash: 0.0005
+
+      thermal_time_constant: 720
+      max_temperature: 85.0
+
+    pid_position:
+      p: 120.0
+      i: 6.0
+      d: 7.0
+      i_clamp_min: -18.0
+      i_clamp_max: 18.0
+      antiwindup: true
+
+    pid_velocity:
+      p: 7.0
+      i: 2.0
+      d: 0.4
+      i_clamp_min: -10.0
+      i_clamp_max: 10.0
+      antiwindup: true
+
+    feedforward:
+      velocity: 0.1
+      acceleration: 0.05
+      gravity_compensation: 0.5
+
+    communication:
+      timeout_ms: 10
+      retry_attempts: 3
+      update_rate_hz: 1000
+
+  wrist_pitch_joint:
+    motor:
+      type: "RMD-X6"
+      manufacturer: "Robstride"
+      model: "X6"
+      can_id: 0x04
+
+      rated_voltage: 48.0
+      rated_current: 10.0
+      peak_current: 20.0
+
+      gear_ratio: 6.0
+      gear_efficiency: 0.85
+      motor_constant_kt: 0.095
+      motor_constant_ke: 0.095
+      motor_resistance: 0.22
+      motor_inductance: 0.00018
+      rotor_inertia: 0.000015
+
+      max_torque: 60.0
+      rated_torque: 40.0
+      max_speed: 1.6
+      rated_speed: 1.4
+
+      encoder_type: "Magnetic Absolute"
+      encoder_resolution: 16384
+      encoder_accuracy: 0.001
+
+      friction_viscous: 0.35
+      friction_coulomb: 1.2
+      backlash: 0.0005
+
+      thermal_time_constant: 720
+      max_temperature: 85.0
+
+    pid_position:
+      p: 100.0
+      i: 5.0
+      d: 6.0
+      i_clamp_min: -15.0
+      i_clamp_max: 15.0
+      antiwindup: true
+
+    pid_velocity:
+      p: 6.0
+      i: 1.5
+      d: 0.3
+      i_clamp_min: -8.0
+      i_clamp_max: 8.0
+      antiwindup: true
+
+    feedforward:
+      velocity: 0.08
+      acceleration: 0.04
+      gravity_compensation: 0.3
+
+    communication:
+      timeout_ms: 10
+      retry_attempts: 3
+      update_rate_hz: 1000
+
+  wrist_roll_joint:
+    motor:
+      type: "RMD-X4"
+      manufacturer: "Robstride"
+      model: "X4"
+      can_id: 0x05
+
+      rated_voltage: 48.0
+      rated_current: 6.0
+      peak_current: 12.0
+
+      gear_ratio: 4.0
+      gear_efficiency: 0.82
+      motor_constant_kt: 0.075
+      motor_constant_ke: 0.075
+      motor_resistance: 0.28
+      motor_inductance: 0.00022
+      rotor_inertia: 0.000008
+
+      max_torque: 17.0
+      rated_torque: 12.0
+      max_speed: 0.8
+      rated_speed: 0.7
+
+      encoder_type: "Magnetic Absolute"
+      encoder_resolution: 16384
+      encoder_accuracy: 0.001
+
+      friction_viscous: 0.25
+      friction_coulomb: 0.8
+      backlash: 0.0005
+
+      thermal_time_constant: 600
+      max_temperature: 85.0
+
+    pid_position:
+      p: 80.0
+      i: 4.0
+      d: 5.0
+      i_clamp_min: -12.0
+      i_clamp_max: 12.0
+      antiwindup: true
+
+    pid_velocity:
+      p: 5.0
+      i: 1.0
+      d: 0.2
+      i_clamp_min: -6.0
+      i_clamp_max: 6.0
+      antiwindup: true
+
+    feedforward:
+      velocity: 0.06
+      acceleration: 0.03
+
+    communication:
+      timeout_ms: 10
+      retry_attempts: 3
+      update_rate_hz: 1000
+
+# Global simulation parameters
+simulation:
+  update_rate_hz: 1000
+  position_tolerance: 0.001  # rad
+  velocity_tolerance: 0.01   # rad/s
+
+  # Physics simulation
+  integrator: "runge_kutta_4"
+  substeps: 4
+
+  # Noise simulation (for realism)
+  position_noise_stddev: 0.0001  # rad
+  velocity_noise_stddev: 0.001   # rad/s
+  current_noise_stddev: 0.05     # A
+
+  # Communication delays
+  command_delay_ms: 1.0
+  feedback_delay_ms: 0.5

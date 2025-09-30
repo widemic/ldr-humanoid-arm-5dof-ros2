@@ -4,9 +4,9 @@ moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControll
 
 moveit_simple_controller_manager:
   controller_names:
-    - humanoid_5dof_arm_controller
+    - joint_trajectory_controller
 
-  humanoid_5dof_arm_controller:
+  joint_trajectory_controller:
     type: FollowJointTrajectory
     joints:
       - base_rotation_joint

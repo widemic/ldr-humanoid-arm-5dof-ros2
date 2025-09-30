@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="humanoid_arm_5dof_gazebo_harmonic" params="prefix">
+
+    <!-- Gazebo Harmonic ros2_control plugin -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find humanoid_arm_control)/config/controllers.yaml</parameters>
+        <parameters>$(find humanoid_arm_description)/config/ros2_control.yaml</parameters>
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+      </plugin>
+    </gazebo>
+
+    <!-- Gazebo-specific link properties (materials) -->
+    <gazebo reference="${prefix}base_link">
+      <visual>
+        <material>
+          <ambient>0.5 0.5 0.5 1</ambient>
+          <diffuse>0.5 0.5 0.5 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}upper_arm_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_pitch_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}forearm_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_flange_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_base_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_assembly_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_roll_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_effector_link">
+      <visual>
+        <material>
+          <ambient>1.0 0.5 0.0 1</ambient>
+          <diffuse>1.0 0.5 0.0 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_motor_link">
+      <visual>
+        <material>
+          <ambient>0.2 0.4 0.8 1</ambient>
+          <diffuse>0.2 0.4 0.8 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+    </gazebo>
+
+    <!-- Contact sensors (Gazebo Harmonic format) -->
+    <gazebo reference="${prefix}forearm_link">
+      <sensor name="${prefix}forearm_contact_sensor" type="contact">
+        <contact>
+          <collision>${prefix}forearm_link_collision</collision>
+        </contact>
+        <always_on>1</always_on>
+        <update_rate>50.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_link">
+      <sensor name="${prefix}wrist_contact_sensor" type="contact">
+        <contact>
+          <collision>${prefix}wrist_pitch_link_collision</collision>
+        </contact>
+        <always_on>1</always_on>
+        <update_rate>50.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}end_effector_link">
+      <sensor name="${prefix}tcp_contact_sensor" type="contact">
+        <contact>
+          <collision>${prefix}end_effector_link_collision</collision>
+        </contact>
+        <always_on>1</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+
+    <!-- Force-Torque sensor -->
+    <gazebo reference="${prefix}wrist_roll_joint">
+      <sensor name="${prefix}tcp_ft_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>true</visualize>
+        <force_torque>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </force_torque>
+      </sensor>
+    </gazebo>
+
+    <!-- IMU sensor -->
+    <gazebo reference="${prefix}upper_arm_link">
+      <sensor name="${prefix}arm_imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
+        <imu>
+          <angular_velocity>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

@@ -58,6 +58,15 @@ install(
 
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 
+# Install Python scripts
+install(PROGRAMS
+  scripts/tune_pid.py
+  scripts/test_trajectory.py
+  scripts/pid_tuner_gui.py
+  scripts/continuous_test.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

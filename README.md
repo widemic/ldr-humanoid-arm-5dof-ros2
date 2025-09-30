@@ -179,6 +179,15 @@ Edit `humanoid_arm_description/config/ros2_control.yaml`:
 - Joint limits and dynamics
 - Contact sensing parameters
 
+### Actuator Simulation
+Edit `humanoid_arm_control/config/actuator_specs.yaml`:
+- Detailed motor specifications (RMD-X8-PRO, RMD-X6, RMD-X4)
+- PID controller gains (position and velocity control)
+- Motor dynamics (inertia, friction, back-EMF)
+- Encoder specifications
+- Communication parameters
+- Thermal limits
+
 ### Teleoperation Configuration
 Edit `humanoid_arm_teleop/config/joystick_config.yaml`:
 - Button mappings
