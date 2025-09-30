@@ -27,6 +27,10 @@
           <param name="min">-3.0</param>
           <param name="max">3.0</param>
         </command_interface>
+        <command_interface name="effort">
+          <param name="min">-120.0</param>
+          <param name="max">120.0</param>
+        </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
@@ -43,6 +47,10 @@
         <command_interface name="velocity">
           <param name="min">-3.0</param>
           <param name="max">3.0</param>
+        </command_interface>
+        <command_interface name="effort">
+          <param name="min">-120.0</param>
+          <param name="max">120.0</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
@@ -61,6 +69,10 @@
           <param name="min">-1.6</param>
           <param name="max">1.6</param>
         </command_interface>
+        <command_interface name="effort">
+          <param name="min">-60.0</param>
+          <param name="max">60.0</param>
+        </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
@@ -78,6 +90,10 @@
           <param name="min">-1.6</param>
           <param name="max">1.6</param>
         </command_interface>
+        <command_interface name="effort">
+          <param name="min">-60.0</param>
+          <param name="max">60.0</param>
+        </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>
@@ -94,6 +110,10 @@
         <command_interface name="velocity">
           <param name="min">-0.8</param>
           <param name="max">0.8</param>
+        </command_interface>
+        <command_interface name="effort">
+          <param name="min">-17.0</param>
+          <param name="max">17.0</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>

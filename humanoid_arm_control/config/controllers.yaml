@@ -59,7 +59,7 @@ joint_trajectory_controller:
       - wrist_roll_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
@@ -103,11 +103,11 @@ joint_trajectory_controller:
         ff_velocity_scale: 0.06
 
     constraints:
-      stopped_velocity_tolerance: 0.02
-      goal_time: 1.0
+      stopped_velocity_tolerance: 1.0
+      goal_time: 10.0
       base_rotation_joint:
-        trajectory: 0.15
-        goal: 0.05
+        trajectory: 0.5
+        goal: 0.1
       shoulder_pitch_joint:
         trajectory: 0.15
         goal: 0.05

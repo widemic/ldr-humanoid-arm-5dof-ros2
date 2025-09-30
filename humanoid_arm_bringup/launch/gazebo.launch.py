@@ -51,33 +51,22 @@ def launch_setup(context, *args, **kwargs):
         world_file
     ])
 
-    # Gazebo launch
+    # Gazebo Harmonic launch
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare('gazebo_ros'),
+                FindPackageShare('ros_gz_sim'),
                 'launch',
-                'gazebo.launch.py'
+                'gz_sim.launch.py'
             ])
         ]),
         launch_arguments={
-            'world': world_file_path,
-            'verbose': verbose,
-            'gui': gui,
-            'headless': headless,
+            'gz_args': ['-r -v 4 ', world_file_path],
         }.items()
     )
 
-    # Control node
-    control_node = Node(
-        package='controller_manager',
-        executable='ros2_control_node',
-        parameters=[robot_description, robot_controllers, {'use_sim_time': use_sim_time}],
-        output='both',
-        remappings=[
-            ('~/robot_description', '/robot_description'),
-        ],
-    )
+    # gz_ros2_control handles both control node and hardware interface
+    # No separate control_node needed with Gazebo Harmonic
 
     # Robot state publisher
     robot_state_publisher_node = Node(
@@ -87,11 +76,25 @@ def launch_setup(context, *args, **kwargs):
         parameters=[robot_description, {'use_sim_time': use_sim_time}]
     )
 
-    # Spawn robot in Gazebo
+    # Spawn robot in Gazebo Harmonic
     spawn_entity = Node(
-        package='gazebo_ros',
-        executable='spawn_entity.py',
-        arguments=['-topic', '/robot_description', '-entity', 'humanoid_arm_5dof'],
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-name', 'humanoid_arm_5dof',
+            '-topic', '/robot_description',
+            '-z', '0.5'  # Spawn slightly above ground
+        ],
+        output='screen'
+    )
+
+    # Bridge for joint states and commands
+    gz_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+        ],
         output='screen'
     )
 
@@ -189,7 +192,7 @@ def launch_setup(context, *args, **kwargs):
 
     nodes_to_start = [
         gazebo,
-        control_node,
+        gz_bridge,
         robot_state_publisher_node,
         delay_spawn_after_rsp,
         joint_state_broadcaster_spawner,
