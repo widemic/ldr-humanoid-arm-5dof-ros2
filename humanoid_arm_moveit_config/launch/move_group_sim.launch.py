@@ -35,6 +35,9 @@ def generate_launch_description():
         parameters=[
             moveit_config.to_dict(),
             {"use_sim_time": use_sim_time},
+            # Increase timeout for effort control (slower than position control)
+            {"trajectory_execution.allowed_execution_duration_scaling": 3.0},
+            {"trajectory_execution.allowed_goal_duration_margin": 5.0},
         ],
     )
 

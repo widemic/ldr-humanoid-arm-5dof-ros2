@@ -64,6 +64,11 @@ install(PROGRAMS
   scripts/test_trajectory.py
   scripts/pid_tuner_gui.py
   scripts/continuous_test.py
+  scripts/trajectory_tuner_gui.py
+  scripts/simple_tuner_gui.py
+  scripts/auto_tune_pid.py
+  scripts/tune_single_joint.py
+  scripts/wave_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
