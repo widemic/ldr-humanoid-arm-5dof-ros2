@@ -10,21 +10,21 @@ controller_manager:
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-    # Individual Position Controllers (for individual joint control)
-    base_rotation_position_controller:
-      type: position_controllers/JointPositionController
+    # Individual Joint Controllers (for isolated PID tuning - using JointTrajectoryController with single joint)
+    base_rotation_joint_position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
-    shoulder_pitch_position_controller:
-      type: position_controllers/JointPositionController
+    shoulder_pitch_joint_position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
-    elbow_pitch_position_controller:
-      type: position_controllers/JointPositionController
+    elbow_pitch_joint_position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
-    wrist_pitch_position_controller:
-      type: position_controllers/JointPositionController
+    wrist_pitch_joint_position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
-    wrist_roll_position_controller:
-      type: position_controllers/JointPositionController
+    wrist_roll_joint_position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
     # Group Position Controller (all joints together)
     arm_position_controller:
@@ -121,51 +121,106 @@ joint_trajectory_controller:
         trajectory: 0.15
         goal: 0.05
 
-# Individual Position Controllers
-base_rotation_position_controller:
+# Individual Joint Controllers (JointTrajectoryController with single joint for isolated PID tuning)
+base_rotation_joint_position_controller:
   ros__parameters:
-    joint: base_rotation_joint
+    joints:
+      - base_rotation_joint
     command_interfaces:
-      - position
+      - effort
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    gains:
+      base_rotation_joint:
+        p: 150.0
+        d: 8.0
+        i: 5.0
+        i_clamp: 20.0
+        ff_velocity_scale: 0.1
 
-shoulder_pitch_position_controller:
+shoulder_pitch_joint_position_controller:
   ros__parameters:
-    joint: shoulder_pitch_joint
+    joints:
+      - shoulder_pitch_joint
     command_interfaces:
-      - position
+      - effort
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    gains:
+      shoulder_pitch_joint:
+        p: 180.0
+        d: 10.0
+        i: 8.0
+        i_clamp: 25.0
+        ff_velocity_scale: 0.12
 
-elbow_pitch_position_controller:
+elbow_pitch_joint_position_controller:
   ros__parameters:
-    joint: elbow_pitch_joint
+    joints:
+      - elbow_pitch_joint
     command_interfaces:
-      - position
+      - effort
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    gains:
+      elbow_pitch_joint:
+        p: 120.0
+        d: 7.0
+        i: 6.0
+        i_clamp: 18.0
+        ff_velocity_scale: 0.1
 
-wrist_pitch_position_controller:
+wrist_pitch_joint_position_controller:
   ros__parameters:
-    joint: wrist_pitch_joint
+    joints:
+      - wrist_pitch_joint
     command_interfaces:
-      - position
+      - effort
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    gains:
+      wrist_pitch_joint:
+        p: 100.0
+        d: 6.0
+        i: 5.0
+        i_clamp: 15.0
+        ff_velocity_scale: 0.08
 
-wrist_roll_position_controller:
+wrist_roll_joint_position_controller:
   ros__parameters:
-    joint: wrist_roll_joint
+    joints:
+      - wrist_roll_joint
     command_interfaces:
-      - position
+      - effort
     state_interfaces:
       - position
       - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    gains:
+      wrist_roll_joint:
+        p: 80.0
+        d: 5.0
+        i: 4.0
+        i_clamp: 12.0
+        ff_velocity_scale: 0.06
 
 # Group Position Controller
 arm_position_controller:

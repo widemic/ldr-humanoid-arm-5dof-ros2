@@ -56,7 +56,7 @@ install(
   RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY config launch ui DESTINATION share/${PROJECT_NAME})
 
 # Install Python scripts
 install(PROGRAMS
@@ -65,8 +65,10 @@ install(PROGRAMS
   scripts/pid_tuner_gui.py
   scripts/continuous_test.py
   scripts/trajectory_tuner_gui.py
+  scripts/trajectory_tuner_ui.py
   scripts/simple_tuner_gui.py
   scripts/auto_tune_pid.py
+  scripts/auto_tune_pid_simple.py
   scripts/tune_single_joint.py
   scripts/wave_publisher.py
   DESTINATION lib/${PROJECT_NAME}

@@ -96,7 +96,8 @@
       <parent link="${prefix}shoulder_motor_link"/>
       <child link="${prefix}upper_arm_link"/>
       <axis xyz="1 0 0"/>
-      <limit lower="-3.14" upper="3.14" effort="120" velocity="3"/>
+      <!-- Temporarily increased for PID tuning - Real motor: 120 Nm -->
+      <limit lower="-3.14" upper="3.14" effort="500" velocity="3"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 

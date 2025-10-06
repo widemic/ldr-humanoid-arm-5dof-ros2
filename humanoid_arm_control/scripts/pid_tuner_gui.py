@@ -32,17 +32,53 @@ class PIDTunerGUI:
         # Current values storage
         self.current_values = {}
 
+        # Detect active controller
+        self.detect_controller()
+
         # Setup GUI
         self.setup_gui()
 
         # Load current parameters
         self.load_current_parameters()
 
+    def detect_controller(self):
+        """Detect which controller is active"""
+        # Default to joint_trajectory_controller
+        self.controller_name = 'joint_trajectory_controller'
+
+        # Try to detect active single-joint controllers
+        try:
+            import subprocess
+            result = subprocess.run(['ros2', 'control', 'list_controllers'],
+                                  capture_output=True, text=True, timeout=2)
+            output = result.stdout
+
+            # Check for single-joint controllers
+            for joint in self.joints:
+                controller = f'{joint}_position_controller'
+                if controller in output and 'active' in output:
+                    self.controller_name = controller
+                    print(f"[INFO] Detected active controller: {self.controller_name}")
+                    break
+
+            if 'joint_trajectory_controller' in output and 'active' in output:
+                self.controller_name = 'joint_trajectory_controller'
+                print(f"[INFO] Using joint_trajectory_controller")
+
+        except Exception as e:
+            print(f"[WARN] Could not detect controller: {e}, using default")
+            self.controller_name = 'joint_trajectory_controller'
+
     def setup_gui(self):
         # Title
-        title = tk.Label(self.window, text="Joint Trajectory Controller PID Tuner",
+        title = tk.Label(self.window, text=f"PID Tuner - {self.controller_name}",
                         font=("Arial", 16, "bold"))
         title.pack(pady=10)
+
+        # Controller info
+        controller_label = tk.Label(self.window, text=f"Controller: {self.controller_name}",
+                                    font=("Arial", 10), fg="blue")
+        controller_label.pack(pady=2)
 
         # Joint selector
         joint_frame = tk.Frame(self.window)
@@ -217,21 +253,23 @@ class PIDTunerGUI:
 
 
 class PIDTunerNode(Node):
-    def __init__(self):
+    def __init__(self, controller_name='joint_trajectory_controller'):
         super().__init__('pid_tuner_gui')
+
+        self.controller_name = controller_name
 
         self.set_param_client = self.create_client(
             SetParameters,
-            '/joint_trajectory_controller/set_parameters'
+            f'/{controller_name}/set_parameters'
         )
 
         self.get_param_client = self.create_client(
             GetParameters,
-            '/joint_trajectory_controller/get_parameters'
+            f'/{controller_name}/get_parameters'
         )
 
         # Wait for services
-        self.get_logger().info('Waiting for parameter services...')
+        self.get_logger().info(f'Waiting for parameter services from {controller_name}...')
         self.set_param_client.wait_for_service(timeout_sec=5.0)
         self.get_param_client.wait_for_service(timeout_sec=5.0)
         self.get_logger().info('Services ready!')
@@ -242,14 +280,30 @@ class PIDTunerNode(Node):
         request.names = param_names
 
         future = self.get_param_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
 
-        if future.result() is not None:
+        # Wait for result without blocking (node is already spinning in background)
+        import time
+        timeout = 2.0
+        start_time = time.time()
+        while not future.done() and (time.time() - start_time) < timeout:
+            time.sleep(0.01)
+
+        if future.done() and future.result() is not None:
             result = {}
             for name, value in zip(param_names, future.result().values):
                 param_key = name.split('.')[-1]  # Get last part (p, i, d, etc.)
-                result[param_key] = value.double_value
-            return result
+                # Handle different parameter types
+                if value.type == ParameterType.PARAMETER_DOUBLE:
+                    result[param_key] = value.double_value
+                elif value.type == ParameterType.PARAMETER_INTEGER:
+                    result[param_key] = float(value.integer_value)
+                else:
+                    self.get_logger().warn(f"Unexpected parameter type for {name}: {value.type}")
+
+            self.get_logger().info(f"Retrieved parameters: {result}")
+            return result if result else None
+
+        self.get_logger().error(f"Failed to get parameters - timeout or error (done={future.done()})")
         return None
 
     def set_gains(self, joint_name, p=None, i=None, d=None, i_clamp=None, ff_velocity_scale=None):
@@ -290,9 +344,15 @@ class PIDTunerNode(Node):
         request.parameters = params
 
         future = self.set_param_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
 
-        if future.result() is not None:
+        # Wait for result without blocking
+        import time
+        timeout = 2.0
+        start_time = time.time()
+        while not future.done() and (time.time() - start_time) < timeout:
+            time.sleep(0.01)
+
+        if future.done() and future.result() is not None:
             return all(r.successful for r in future.result().results)
         return False
 
@@ -305,7 +365,34 @@ def spin_ros(node):
 def main():
     rclpy.init()
 
-    node = PIDTunerNode()
+    # Detect which controller is active
+    import subprocess
+    controller_name = 'joint_trajectory_controller'  # Default
+
+    try:
+        result = subprocess.run(['ros2', 'control', 'list_controllers'],
+                              capture_output=True, text=True, timeout=2)
+        output = result.stdout
+
+        # Check for single-joint controllers
+        joints = ['base_rotation_joint', 'shoulder_pitch_joint', 'elbow_pitch_joint',
+                 'wrist_pitch_joint', 'wrist_roll_joint']
+
+        for joint in joints:
+            controller = f'{joint}_position_controller'
+            if controller in output and 'active' in output:
+                controller_name = controller
+                print(f"[INFO] Detected active controller: {controller_name}")
+                break
+
+        if 'joint_trajectory_controller' in output and 'active' in output:
+            controller_name = 'joint_trajectory_controller'
+            print(f"[INFO] Using joint_trajectory_controller")
+
+    except Exception as e:
+        print(f"[WARN] Could not detect controller: {e}, using default")
+
+    node = PIDTunerNode(controller_name=controller_name)
 
     # Start ROS spin in background thread
     ros_thread = threading.Thread(target=spin_ros, args=(node,), daemon=True)

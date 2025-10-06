@@ -1,264 +1,391 @@
 #!/usr/bin/env python3
 """
-Automatic PID tuning using relay feedback method (Ziegler-Nichols variant)
-This finds the ultimate gain (Ku) and period (Pu) by inducing oscillations
+Automatic PID Tuning using Relay Feedback Method
+
+Usage:
+    ros2 run humanoid_arm_control auto_tune_pid.py --joint base_rotation_joint
 """
 
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionClient
-from control_msgs.action import FollowJointTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
 from sensor_msgs.msg import JointState
-from control_msgs.msg import JointTrajectoryControllerState
-from builtin_interfaces.msg import Duration
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rcl_interfaces.msg import Parameter, ParameterValue, ParameterType
 from rcl_interfaces.srv import SetParameters
-from rcl_interfaces.msg import Parameter, ParameterType
 import numpy as np
-import argparse
 import time
+import argparse
+import threading
 
 
-class AutoTuner(Node):
-    def __init__(self, joint_idx):
-        super().__init__('auto_tuner')
+class PIDAutoTuner(Node):
+    def __init__(self, joint_name):
+        super().__init__('pid_auto_tuner')
 
-        self.joint_names = [
-            'base_rotation_joint',
-            'shoulder_pitch_joint',
-            'elbow_pitch_joint',
-            'wrist_pitch_joint',
-            'wrist_roll_joint'
-        ]
+        self.joint_name = joint_name
+        self.controller_name = f'{joint_name}_position_controller'
 
-        self.joint_idx = joint_idx
-        self.joint_name = self.joint_names[joint_idx]
+        # Joint index
+        joint_map = {
+            'base_rotation_joint': 0,
+            'shoulder_pitch_joint': 1,
+            'elbow_pitch_joint': 2,
+            'wrist_pitch_joint': 3,
+            'wrist_roll_joint': 4
+        }
+        self.joint_index = joint_map.get(joint_name, 0)
 
-        # Oscillation detection
-        self.error_history = []
-        self.time_history = []
-        self.peaks = []
-        self.start_time = None
+        # Parameters
+        self.relay_amplitude = 0.3
+        self.setpoint = 0.0
 
-        # Subscribe to controller state
-        self.state_sub = self.create_subscription(
-            JointTrajectoryControllerState,
-            '/joint_trajectory_controller/controller_state',
-            self.state_callback,
+        # Data collection
+        self.positions = []
+        self.timestamps = []
+        self.current_position = 0.0
+        self.lock = threading.Lock()
+
+        # Publishers/Subscribers
+        self.cmd_pub = self.create_publisher(
+            JointTrajectory,
+            f'/{self.controller_name}/joint_trajectory',
+            10
+        )
+
+        self.joint_sub = self.create_subscription(
+            JointState,
+            '/joint_states',
+            self.joint_callback,
             10
         )
 
         # Service client
         self.set_param_client = self.create_client(
             SetParameters,
-            '/joint_trajectory_controller/set_parameters'
+            f'/{self.controller_name}/set_parameters'
         )
 
-        # Action client
-        self.action_client = ActionClient(
-            self,
-            FollowJointTrajectory,
-            '/joint_trajectory_controller/follow_joint_trajectory'
-        )
+        self.get_logger().info(f'Auto-tuner ready for {joint_name}')
 
-        self.get_logger().info(f'🤖 Auto-tuning {self.joint_name}...')
+    def joint_callback(self, msg):
+        """Update current position from joint states"""
+        if self.joint_index < len(msg.position):
+            with self.lock:
+                self.current_position = msg.position[self.joint_index]
 
-    def state_callback(self, msg):
-        """Collect tracking error data"""
-        if self.start_time is None:
-            return
+    def send_command(self, position, duration=0.5):
+        """Send position command to controller"""
+        msg = JointTrajectory()
+        msg.joint_names = [self.joint_name]
+        point = JointTrajectoryPoint()
+        point.positions = [position]
+        point.time_from_start.sec = int(duration)
+        point.time_from_start.nanosec = int((duration - int(duration)) * 1e9)
+        msg.points = [point]
+        self.cmd_pub.publish(msg)
 
-        current_time = time.time() - self.start_time
-        error = msg.error.positions[self.joint_idx]
-
-        self.time_history.append(current_time)
-        self.error_history.append(error)
-
-        # Detect peaks (oscillations)
-        if len(self.error_history) >= 3:
-            if (self.error_history[-2] > self.error_history[-3] and
-                self.error_history[-2] > self.error_history[-1] and
-                abs(self.error_history[-2]) > 0.01):  # Minimum peak threshold
-                self.peaks.append((self.time_history[-2], self.error_history[-2]))
-
-    def set_pid(self, p, i, d):
-        """Set PID gains"""
+    def set_gains(self, p, i, d, i_clamp=20.0, ff_velocity_scale=0.1):
+        """Set PID gains via service call"""
         params = []
 
-        param = Parameter()
-        param.name = f'gains.{self.joint_name}.p'
-        param.value.type = ParameterType.PARAMETER_DOUBLE
-        param.value.double_value = float(p)
-        params.append(param)
+        for name, val in [('p', p), ('i', i), ('d', d), ('i_clamp', i_clamp), ('ff_velocity_scale', ff_velocity_scale)]:
+            param = Parameter()
+            param.name = f'gains.{self.joint_name}.{name}'
+            param.value = ParameterValue(type=ParameterType.PARAMETER_DOUBLE, double_value=float(val))
+            params.append(param)
 
-        param = Parameter()
-        param.name = f'gains.{self.joint_name}.i'
-        param.value.type = ParameterType.PARAMETER_DOUBLE
-        param.value.double_value = float(i)
-        params.append(param)
+        req = SetParameters.Request()
+        req.parameters = params
+        future = self.set_param_client.call_async(req)
 
-        param = Parameter()
-        param.name = f'gains.{self.joint_name}.d'
-        param.value.type = ParameterType.PARAMETER_DOUBLE
-        param.value.double_value = float(d)
-        params.append(param)
+        # Non-blocking wait
+        timeout = 2.0
+        start = time.time()
+        while not future.done() and (time.time() - start) < timeout:
+            time.sleep(0.01)
 
-        request = SetParameters.Request()
-        request.parameters = params
+        if future.done() and future.result():
+            self.get_logger().info(f'Gains set: P={p:.2f}, I={i:.2f}, D={d:.2f}')
+            return True
 
-        future = self.set_param_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
+        self.get_logger().error('Failed to set gains')
+        return False
 
-        return future.done()
+    def collect_data(self, duration):
+        """Collect position data for specified duration"""
+        self.positions.clear()
+        self.timestamps.clear()
 
-    def send_step_trajectory(self, amplitude=0.5, duration=5.0):
-        """Send a step trajectory"""
-        goal = FollowJointTrajectory.Goal()
-        goal.trajectory.joint_names = self.joint_names
+        start_time = time.time()
 
-        # Start position (current)
-        point1 = JointTrajectoryPoint()
-        point1.positions = [0.0] * 5  # Simplified
-        point1.time_from_start = Duration(sec=0, nanosec=0)
+        while (time.time() - start_time) < duration:
+            with self.lock:
+                self.positions.append(self.current_position)
+                self.timestamps.append(time.time() - start_time)
+            time.sleep(0.02)  # 50 Hz sampling
 
-        # Target position
-        point2 = JointTrajectoryPoint()
-        point2.positions = [0.0] * 5
-        point2.positions[self.joint_idx] = amplitude
-        point2.time_from_start = Duration(sec=int(duration), nanosec=int((duration % 1) * 1e9))
+        self.get_logger().info(f'Collected {len(self.positions)} samples over {duration}s')
 
-        goal.trajectory.points = [point1, point2]
+    def run_relay_test(self, duration=30.0):
+        """Run relay feedback test"""
+        self.get_logger().info('=== RELAY TEST ===')
+        self.get_logger().info('Setting P=200, I=0, D=0 for relay feedback')
 
-        # Reset data collection
-        self.error_history = []
-        self.time_history = []
-        self.peaks = []
-        self.start_time = time.time()
+        if not self.set_gains(200.0, 0.0, 0.0):
+            return False
 
-        # Send
-        self.action_client.wait_for_server()
-        future = self.action_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
+        time.sleep(2.0)
 
-    def find_ultimate_gain(self, p_start=10, p_step=20, max_iterations=10):
-        """
-        Iteratively increase P gain until sustained oscillations occur
-        Returns (Ku, Pu) - ultimate gain and period
-        """
-        self.get_logger().info('🔍 Phase 1: Finding ultimate gain (Ku)...')
+        # Move to setpoint
+        self.get_logger().info(f'Moving to setpoint {self.setpoint}rad...')
+        self.send_command(self.setpoint, duration=2.0)
+        time.sleep(3.0)
 
-        p_current = p_start
+        # Start relay oscillations
+        self.get_logger().info('Starting relay oscillations...')
 
-        for iteration in range(max_iterations):
-            # Set P gain, zero I and D
-            self.get_logger().info(f'   Testing P = {p_current}')
-            self.set_pid(p_current, 0, 0)
-            time.sleep(0.5)
+        start_time = time.time()
+        self.positions.clear()
+        self.timestamps.clear()
 
-            # Send step trajectory
-            self.send_step_trajectory(amplitude=0.3, duration=5.0)
+        while (time.time() - start_time) < duration:
+            elapsed = time.time() - start_time
 
-            # Wait for trajectory to complete
-            time.sleep(6.0)
+            # Get current position
+            with self.lock:
+                pos = self.current_position
+                self.positions.append(pos)
+                self.timestamps.append(elapsed)
 
-            # Check for oscillations
-            if len(self.peaks) >= 3:
-                # Calculate period from peaks
-                periods = []
-                for i in range(1, len(self.peaks)):
-                    period = self.peaks[i][0] - self.peaks[i-1][0]
-                    periods.append(period)
+            # Relay control
+            error = self.setpoint - pos
+            relay_offset = self.relay_amplitude if error > 0 else -self.relay_amplitude
+            target = self.setpoint + relay_offset
+            self.send_command(target, duration=0.1)
 
-                avg_period = np.mean(periods)
+            # Status update every 2 seconds
+            if int(elapsed) % 2 == 0 and len(self.positions) > 0:
+                if elapsed - int(elapsed) < 0.1:  # Only print once per interval
+                    self.get_logger().info(f'[{elapsed:.1f}s] Pos={pos:.4f}, Target={target:.4f}, Samples={len(self.positions)}')
 
-                # Check if oscillations are sustained (consistent period)
-                period_std = np.std(periods)
-                if period_std < avg_period * 0.3:  # Period variation < 30%
-                    self.get_logger().info(f'✓ Found sustained oscillations!')
-                    self.get_logger().info(f'   Ku = {p_current}')
-                    self.get_logger().info(f'   Pu = {avg_period:.3f} seconds')
-                    return p_current, avg_period
+            # Check for oscillations after 10 seconds
+            if elapsed > 10.0 and int(elapsed) % 3 == 0:
+                if elapsed - int(elapsed) < 0.1:
+                    result = self.detect_oscillation()
+                    if result is not None:
+                        period, amplitude = result
+                        if elapsed > 20.0:  # Have enough data
+                            self.get_logger().info(f'✓ Oscillation detected after {elapsed:.1f}s')
+                            return period, amplitude
 
-            # Increase P and try again
-            p_current += p_step
+            time.sleep(0.02)  # 50 Hz
 
-        self.get_logger().warn('⚠ Could not find sustained oscillations. Try manually.')
-        return None, None
+        # Final check
+        result = self.detect_oscillation()
+        if result is not None:
+            return result
 
-    def calculate_ziegler_nichols(self, ku, pu):
-        """
-        Calculate PID gains using Ziegler-Nichols method
+        self.get_logger().error('Failed to detect oscillations')
+        return None
 
-        Classic Ziegler-Nichols:
-        - P controller:   Kp = 0.5 * Ku
-        - PI controller:  Kp = 0.45 * Ku,  Ki = 0.54 * Ku / Pu
-        - PID controller: Kp = 0.6 * Ku,   Ki = 1.2 * Ku / Pu,  Kd = 0.075 * Ku * Pu
-
-        Returns: (P, I, D)
-        """
-        # Use PID formula
-        p = 0.6 * ku
-        i = 1.2 * ku / pu
-        d = 0.075 * ku * pu
-
-        return p, i, d
-
-    def auto_tune(self):
-        """Main auto-tuning procedure"""
-        self.get_logger().info('=' * 60)
-        self.get_logger().info(f'🎛️  AUTO-TUNING: {self.joint_name}')
-        self.get_logger().info('=' * 60)
-
-        # Step 1: Find ultimate gain
-        ku, pu = self.find_ultimate_gain(p_start=20, p_step=30)
-
-        if ku is None:
-            self.get_logger().error('❌ Auto-tuning failed')
+    def detect_oscillation(self):
+        """Detect oscillation period and amplitude"""
+        if len(self.positions) < 200:
             return None
 
-        # Step 2: Calculate PID gains
-        self.get_logger().info('')
-        self.get_logger().info('🧮 Phase 2: Calculating PID gains...')
-        p, i, d = self.calculate_ziegler_nichols(ku, pu)
+        pos = np.array(self.positions)
+        times = np.array(self.timestamps)
 
-        self.get_logger().info('')
-        self.get_logger().info('=' * 60)
-        self.get_logger().info('✅ AUTO-TUNING COMPLETE')
-        self.get_logger().info('=' * 60)
-        self.get_logger().info(f'Recommended PID gains for {self.joint_name}:')
-        self.get_logger().info(f'  P = {p:.1f}')
-        self.get_logger().info(f'  I = {i:.1f}')
-        self.get_logger().info(f'  D = {d:.1f}')
-        self.get_logger().info('')
-        self.get_logger().info('Applying gains...')
+        # Center around mean
+        pos_centered = pos - np.mean(pos)
 
-        # Step 3: Apply the gains
-        self.set_pid(p, i, d)
+        # Simple peak detection
+        peaks = []
+        troughs = []
 
-        self.get_logger().info('✓ Gains applied! Test with:')
-        self.get_logger().info(f'  python3 humanoid_arm_control/scripts/test_trajectory.py --joint {self.joint_idx} --reset')
+        for i in range(5, len(pos) - 5):
+            # Peak
+            if all(pos_centered[i] > pos_centered[i-j] for j in range(1, 6)) and \
+               all(pos_centered[i] > pos_centered[i+j] for j in range(1, 6)):
+                if abs(pos_centered[i]) > 0.015:
+                    peaks.append((times[i], pos_centered[i]))
 
-        return p, i, d
+            # Trough
+            if all(pos_centered[i] < pos_centered[i-j] for j in range(1, 6)) and \
+               all(pos_centered[i] < pos_centered[i+j] for j in range(1, 6)):
+                if abs(pos_centered[i]) > 0.015:
+                    troughs.append((times[i], pos_centered[i]))
+
+        if len(peaks) < 3 or len(troughs) < 3:
+            self.get_logger().info(f'Not enough peaks ({len(peaks)}) or troughs ({len(troughs)})')
+            return None
+
+        # Calculate period from peaks
+        periods = [peaks[i][0] - peaks[i-1][0] for i in range(1, len(peaks))]
+        avg_period = np.mean(periods)
+        std_period = np.std(periods)
+
+        # Calculate amplitude
+        peak_vals = [p[1] for p in peaks]
+        trough_vals = [t[1] for t in troughs]
+        amplitude = (max(peak_vals) - min(trough_vals)) / 2.0
+
+        # Check consistency
+        if std_period < 0.4 * avg_period and amplitude > 0.02:
+            self.get_logger().info(f'✓ Valid oscillation: Period={avg_period:.3f}s, Amplitude={amplitude:.4f}rad')
+            return avg_period, amplitude
+
+        self.get_logger().info(f'Oscillation not stable: Period {avg_period:.3f}±{std_period:.3f}s, Amp={amplitude:.4f}')
+        return None
+
+    def calculate_gains(self, period, amplitude):
+        """Calculate PID gains using modified Ziegler-Nichols for effort control"""
+        Tu = period
+        a = amplitude
+        d = self.relay_amplitude
+
+        # Ultimate gain from relay test
+        Ku = (4 * d) / (np.pi * a)
+
+        self.get_logger().info(f'Ultimate parameters: Ku={Ku:.2f}, Tu={Tu:.3f}s')
+
+        # Aggressive tuning for heavy arm with effort control
+        # Standard Z-N: Kp=0.6*Ku, Ki=1.2*Ku/Tu, Kd=0.075*Ku*Tu
+        # For heavy arm with effort control, we need MUCH higher gains
+        Kp = 1.2 * Ku  # Very aggressive proportional for heavy load
+        Ki = 0.3 * Ku / Tu  # Low integral to prevent windup
+        Kd = 0.25 * Ku * Tu  # High damping for stability
+
+        self.get_logger().info(f'Using aggressive tuning for heavy arm + effort control')
+        self.get_logger().info(f'  Kp = 1.2 * Ku = {Kp:.2f}')
+        self.get_logger().info(f'  Ki = 0.3 * Ku / Tu = {Ki:.2f}')
+        self.get_logger().info(f'  Kd = 0.25 * Ku * Tu = {Kd:.2f}')
+
+        return {
+            'p': Kp,
+            'i': Ki,
+            'd': Kd,
+            'i_clamp': max(20.0, Ki * 5),  # Higher clamp for lower Ki
+            'ff_velocity_scale': 0.12  # Increased feedforward
+        }
+
+    def test_step_response(self, target=0.5, duration=8.0):
+        """Test step response"""
+        self.get_logger().info(f'\n=== TESTING STEP RESPONSE to {target}rad ===')
+
+        self.positions.clear()
+        self.timestamps.clear()
+
+        # Send step command
+        self.send_command(target, duration=2.0)
+
+        # Collect data
+        start_time = time.time()
+        while (time.time() - start_time) < duration:
+            elapsed = time.time() - start_time
+            with self.lock:
+                self.positions.append(self.current_position)
+                self.timestamps.append(elapsed)
+            time.sleep(0.02)
+
+        # Analyze
+        pos = np.array(self.positions)
+        if len(pos) > 50:
+            overshoot = ((np.max(pos) - target) / abs(target)) * 100 if target != 0 else 0
+            final_error = abs(pos[-20:].mean() - target)
+            settling_tolerance = 0.05  # 5% of target
+            settled_indices = np.where(np.abs(pos - target) < settling_tolerance)[0]
+            settling_time = self.timestamps[settled_indices[0]] if len(settled_indices) > 0 else 999
+
+            self.get_logger().info(f'Results:')
+            self.get_logger().info(f'  Overshoot: {overshoot:.1f}%')
+            self.get_logger().info(f'  Final error: {final_error:.4f}rad ({final_error/abs(target)*100:.1f}%)')
+            self.get_logger().info(f'  Settling time (±5%): {settling_time:.2f}s')
+
+            # Success criteria for effort control (more relaxed than position control)
+            success = abs(overshoot) < 50 and final_error < 0.15
+            return success
+
+        return False
+
+    def run(self):
+        """Main auto-tuning sequence"""
+        self.get_logger().info(f'\n{"="*60}')
+        self.get_logger().info(f'AUTO-TUNE STARTING: {self.joint_name}')
+        self.get_logger().info(f'{"="*60}\n')
+
+        time.sleep(2.0)
+
+        # Step 1: Relay test
+        result = self.run_relay_test(duration=35.0)
+        if result is None:
+            self.get_logger().error('❌ Relay test failed')
+            return False
+
+        period, amplitude = result
+
+        # Step 2: Calculate gains
+        gains = self.calculate_gains(period, amplitude)
+        self.get_logger().info(f'\nCalculated PID gains:')
+        self.get_logger().info(f'  P = {gains["p"]:.2f}')
+        self.get_logger().info(f'  I = {gains["i"]:.2f}')
+        self.get_logger().info(f'  D = {gains["d"]:.2f}')
+
+        # Step 3: Apply gains
+        if not self.set_gains(**gains):
+            return False
+
+        time.sleep(2.0)
+
+        # Step 4: Test
+        success = self.test_step_response(0.5)
+
+        # Final report
+        self.get_logger().info(f'\n{"="*60}')
+        if success:
+            self.get_logger().info(f'✓ AUTO-TUNE COMPLETE!')
+        else:
+            self.get_logger().info(f'⚠ AUTO-TUNE COMPLETE (may need manual adjustment)')
+
+        self.get_logger().info(f'\nFinal PID Gains for {self.joint_name}:')
+        self.get_logger().info(f'  p: {gains["p"]:.2f}')
+        self.get_logger().info(f'  i: {gains["i"]:.2f}')
+        self.get_logger().info(f'  d: {gains["d"]:.2f}')
+        self.get_logger().info(f'  i_clamp: {gains["i_clamp"]:.2f}')
+        self.get_logger().info(f'  ff_velocity_scale: {gains["ff_velocity_scale"]:.2f}')
+        self.get_logger().info(f'\nUpdate controllers.yaml with these values.')
+        self.get_logger().info(f'{"="*60}\n')
+
+        return True
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Automatic PID tuning using relay feedback')
-    parser.add_argument('--joint', type=int, required=True, choices=[0, 1, 2, 3, 4],
-                       help='Joint index (0=base, 1=shoulder, 2=elbow, 3=wrist_pitch, 4=wrist_roll)')
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--joint', default='base_rotation_joint')
     args = parser.parse_args()
 
     rclpy.init()
+    node = PIDAutoTuner(args.joint)
 
-    tuner = AutoTuner(args.joint)
+    # Spin in background thread
+    spin_thread = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
+    spin_thread.start()
 
     try:
-        tuner.auto_tune()
+        node.run()
     except KeyboardInterrupt:
-        pass
+        node.get_logger().info('Interrupted by user')
+    except Exception as e:
+        node.get_logger().error(f'Error: {e}')
     finally:
-        tuner.destroy_node()
-        rclpy.shutdown()
+        try:
+            node.destroy_node()
+        except:
+            pass
+        try:
+            rclpy.shutdown()
+        except:
+            pass
 
 
 if __name__ == '__main__':
