@@ -1,170 +1,109 @@
 #!/usr/bin/env python3
 
 """
-Full system launch: Gazebo simulation + MoveIt2 + RViz
-Allows interactive control via MoveIt and see the robot move in Gazebo
+Full system launch file - Gazebo + MoveIt2 + RViz.
+
+Launches complete system: Gazebo simulation with physics, MoveIt2 motion planning,
+and RViz visualization with interactive planning.
+
+Usage:
+    ros2 launch humanoid_arm_bringup full_system.launch.py
+    ros2 launch humanoid_arm_bringup full_system.launch.py world_file:=contact_manipulation_arena.sdf
 """
 
 import os
 import yaml
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, RegisterEventHandler, TimerAction
-from launch.event_handlers import OnProcessExit
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
-import xacro
+
+# Import our custom modules
+from modules import robot_description, controllers, gazebo, rviz
 
 
 def generate_launch_description():
-    # Declare arguments
-    declared_arguments = []
-
-    declared_arguments.append(
+    # ========== Launch Arguments ==========
+    declared_arguments = [
         DeclareLaunchArgument(
             'world_file',
             default_value='empty_world.sdf',
-            description='Gazebo world file to load.',
-        )
-    )
-
-    declared_arguments.append(
+            description='Gazebo world file'
+        ),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='true',
-            description='Use simulation time.',
-        )
-    )
-
-    declared_arguments.append(
+            description='Use simulation time'
+        ),
         DeclareLaunchArgument(
             'gui',
             default_value='true',
-            description='Start Gazebo with GUI.',
-        )
-    )
+            description='Start Gazebo GUI'
+        ),
+    ]
 
-    # Get parameters
+    # ========== Configuration ==========
     world_file = LaunchConfiguration('world_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
     gui = LaunchConfiguration('gui')
 
-    # Get URDF via xacro
-    robot_description_content = xacro.process_file(
-        os.path.join(
-            get_package_share_directory('humanoid_arm_description'),
-            'urdf',
-            'humanoid_arm_5dof_ros2_control.urdf.xacro'
-        ),
-        mappings={
-            'use_fake_hardware': 'false',  # Use Gazebo
-            'robot_controller': 'joint_trajectory_controller'
-        }
+    # ========== Gazebo ==========
+    gazebo_nodes = gazebo.get_standard_gazebo_setup(
+        world_file=world_file,
+        gui=gui
     )
-    robot_description = {'robot_description': robot_description_content.toxml()}
 
-    # Load SRDF (Semantic Robot Description Format)
-    robot_description_semantic_path = os.path.join(
+    # ========== Robot Description ==========
+    robot_desc = robot_description.load_urdf(
+        use_fake_hardware=False,
+        robot_controller='joint_trajectory_controller'
+    )
+
+    robot_state_pub = robot_description.get_robot_state_publisher(
+        robot_description=robot_desc,
+        use_sim_time=True
+    )
+
+    # ========== Load SRDF for MoveIt ==========
+    srdf_path = os.path.join(
         get_package_share_directory('humanoid_arm_moveit_config'),
         'config',
         'humanoid_arm_5dof.srdf'
     )
-    with open(robot_description_semantic_path, 'r') as file:
+    with open(srdf_path, 'r') as file:
         robot_description_semantic = {'robot_description_semantic': file.read()}
 
-    # Robot controllers configuration
-    robot_controllers = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_control'),
+    # ========== Load Kinematics Config ==========
+    kinematics_path = os.path.join(
+        get_package_share_directory('humanoid_arm_moveit_config'),
         'config',
-        'controllers.yaml',
-    ])
-
-    # World file path
-    world_file_path = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_bringup'),
-        'worlds',
-        world_file
-    ])
-
-    # Gazebo Harmonic (gz-sim) launch
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare('ros_gz_sim'),
-                'launch',
-                'gz_sim.launch.py'
-            ])
-        ]),
-        launch_arguments={
-            'gz_args': ['-r -v4 ', world_file_path],
-            'on_exit_shutdown': 'true'
-        }.items()
+        'kinematics.yaml'
     )
+    with open(kinematics_path, 'r') as file:
+        kinematics_data = yaml.safe_load(file)
+    kinematics_config = {'robot_description_kinematics': kinematics_data}
 
-    # Robot state publisher
-    robot_state_publisher_node = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='both',
-        parameters=[robot_description, {'use_sim_time': use_sim_time}]
-    )
-
-    # Spawn robot in Gazebo Harmonic
-    spawn_entity = Node(
-        package='ros_gz_sim',
-        executable='create',
-        arguments=['-topic', '/robot_description', '-name', 'humanoid_arm_5dof'],
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # Bridge for Gazebo topics
-    gz_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=[
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-        ],
-        output='screen'
-    )
-
-    # Joint state broadcaster spawner
-    joint_state_broadcaster_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # Robot controller spawner
-    robot_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_trajectory_controller', '--controller-manager', '/controller_manager'],
-        parameters=[{'use_sim_time': use_sim_time}],
-    )
-
-    # Delay spawn after robot state publisher starts publishing
-    delay_spawn_after_rsp = TimerAction(
+    # ========== Spawn Robot ==========
+    spawn_robot_delayed = TimerAction(
         period=3.0,
-        actions=[spawn_entity]
+        actions=[gazebo_nodes[1]]  # spawn_robot
     )
 
-    # Delay joint state broadcaster after spawn
-    delay_joint_state_broadcaster = TimerAction(
+    # ========== Controllers ==========
+    controller_nodes = controllers.get_standard_controllers(
+        primary_controller='joint_trajectory_controller',
+        use_sim_time=True,
+        sequence=True
+    )
+
+    controllers_delayed = TimerAction(
         period=5.0,
-        actions=[joint_state_broadcaster_spawner]
+        actions=controller_nodes
     )
 
-    # Delay controller after joint state broadcaster
-    delay_robot_controller = TimerAction(
-        period=7.0,
-        actions=[robot_controller_spawner]
-    )
-
-    # MoveIt launch (starts after controllers are loaded)
+    # ========== MoveIt2 ==========
     moveit_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -173,64 +112,36 @@ def generate_launch_description():
                 'move_group_sim.launch.py'
             ])
         ]),
-        launch_arguments={
-            'use_sim_time': 'true',
-        }.items()
+        launch_arguments={'use_sim_time': 'true'}.items()
     )
 
-    delay_moveit = TimerAction(
-        period=9.0,
+    moveit_delayed = TimerAction(
+        period=7.0,
         actions=[moveit_launch]
     )
 
-    # RViz with MoveIt config
-    rviz_config_file = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_moveit_config'),
-        'config',
-        'moveit.rviz'
-    ])
-
-    # Load kinematics config for interactive markers
-    kinematics_yaml_path = os.path.join(
-        get_package_share_directory('humanoid_arm_moveit_config'),
-        'config',
-        'kinematics.yaml'
+    # ========== RViz with MoveIt ==========
+    rviz_node = rviz.get_rviz_moveit(
+        robot_description=robot_desc,
+        robot_description_semantic=robot_description_semantic,
+        kinematics_config=kinematics_config,
+        use_sim_time=True
     )
 
-    with open(kinematics_yaml_path, 'r') as file:
-        kinematics_data = yaml.safe_load(file)
-
-    # Wrap kinematics under robot_description_kinematics namespace
-    kinematics_config = {'robot_description_kinematics': kinematics_data}
-
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='log',
-        arguments=['-d', rviz_config_file],
-        parameters=[
-            robot_description,
-            robot_description_semantic,
-            {'use_sim_time': use_sim_time},
-            kinematics_config,
-        ]
-    )
-
-    delay_rviz = TimerAction(
-        period=10.0,
+    rviz_delayed = TimerAction(
+        period=9.0,
         actions=[rviz_node]
     )
 
+    # ========== Compose Launch Description ==========
     nodes_to_start = [
-        gazebo,
-        gz_bridge,
-        robot_state_publisher_node,
-        delay_spawn_after_rsp,
-        delay_joint_state_broadcaster,
-        delay_robot_controller,
-        delay_moveit,
-        delay_rviz,
+        gazebo_nodes[0],  # Gazebo server
+        gazebo_nodes[2],  # Clock bridge
+        robot_state_pub,
+        spawn_robot_delayed,
+        controllers_delayed,
+        moveit_delayed,
+        rviz_delayed,
     ]
 
     return LaunchDescription(declared_arguments + nodes_to_start)
