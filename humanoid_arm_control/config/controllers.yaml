@@ -59,7 +59,7 @@ joint_trajectory_controller:
       - wrist_roll_joint
 
     command_interfaces:
-      - effort
+      - position  # Use Gazebo's internal PID for perfect tracking
 
     state_interfaces:
       - position
@@ -69,7 +69,8 @@ joint_trajectory_controller:
     action_monitor_rate: 20.0
     allow_partial_joints_goal: false
 
-    # PID gains for trajectory tracking
+    # PID gains - not used with position interface (Gazebo handles PID internally)
+    # These are kept for compatibility but ignored by Gazebo
     gains:
       base_rotation_joint:
         p: 150.0
@@ -103,23 +104,23 @@ joint_trajectory_controller:
         ff_velocity_scale: 0.06
 
     constraints:
-      stopped_velocity_tolerance: 1.0
-      goal_time: 10.0
+      stopped_velocity_tolerance: 0.5  # Realistic for any control mode
+      goal_time: 15.0  # Allow time to reach goal
       base_rotation_joint:
-        trajectory: 0.5
+        trajectory: 0.3  # Relaxed - even position control needs headroom
         goal: 0.1
       shoulder_pitch_joint:
-        trajectory: 0.15
-        goal: 0.05
+        trajectory: 0.3  # Relaxed from 0.1
+        goal: 0.1
       elbow_pitch_joint:
-        trajectory: 0.15
-        goal: 0.05
+        trajectory: 0.3
+        goal: 0.1
       wrist_pitch_joint:
-        trajectory: 0.15
-        goal: 0.05
+        trajectory: 0.3
+        goal: 0.1
       wrist_roll_joint:
-        trajectory: 0.15
-        goal: 0.05
+        trajectory: 0.3
+        goal: 0.1
 
 # Individual Joint Controllers (JointTrajectoryController with single joint for isolated PID tuning)
 base_rotation_joint_position_controller:

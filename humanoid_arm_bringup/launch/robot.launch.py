@@ -12,6 +12,12 @@ Usage:
     ros2 launch humanoid_arm_bringup robot.launch.py initial_joint_controller:=arm_position_controller
 """
 
+import sys
+from pathlib import Path
+
+# Add modules directory to Python path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition

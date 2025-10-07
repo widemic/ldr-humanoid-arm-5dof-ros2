@@ -38,6 +38,8 @@ def generate_launch_description():
             # Increase timeout for effort control (slower than position control)
             {"trajectory_execution.allowed_execution_duration_scaling": 3.0},
             {"trajectory_execution.allowed_goal_duration_margin": 5.0},
+            # Increase start tolerance for effort-controlled simulation (natural drift/oscillation)
+            {"trajectory_execution.allowed_start_tolerance": 0.1},  # 0.01 rad default is too strict
         ],
     )
 

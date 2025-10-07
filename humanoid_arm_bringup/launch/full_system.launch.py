@@ -11,6 +11,12 @@ Usage:
     ros2 launch humanoid_arm_bringup full_system.launch.py world_file:=contact_manipulation_arena.sdf
 """
 
+import sys
+from pathlib import Path
+
+# Add modules directory to Python path
+sys.path.insert(0, str(Path(__file__).parent))
+
 import os
 import yaml
 from launch import LaunchDescription

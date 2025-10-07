@@ -17,6 +17,16 @@
   <!-- Robot macro -->
   <xacro:macro name="humanoid_arm_5dof_macro" params="prefix use_fake_hardware:=true fake_sensor_commands:=false slowdown:=3.0 robot_controller:=joint_trajectory_controller">
 
+    <!-- World link (massless, for fixing base to world in Gazebo) -->
+    <link name="${prefix}world"/>
+
+    <!-- Fixed joint: world -> base_link (fixes base to ground) -->
+    <joint name="${prefix}world_to_base_joint" type="fixed">
+      <parent link="${prefix}world"/>
+      <child link="${prefix}base_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
     <!-- Base Link -->
     <link name="${prefix}base_link">
       <inertial>

@@ -71,6 +71,11 @@ install(PROGRAMS
   scripts/auto_tune_pid_simple.py
   scripts/tune_single_joint.py
   scripts/wave_publisher.py
+  scripts/reach_target.py
+  scripts/reach_target_simple.py
+  scripts/reach_target_ik.py
+  scripts/reach_target_moveit.py
+  scripts/reach_with_ik.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
