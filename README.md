@@ -106,7 +106,17 @@ ros2 launch humanoid_arm_teleop joystick_teleop.launch.py
 - **Circle**: Home position
 - **Square**: Ready position
 
-### 5. MoveIt2 Motion Planning
+### 5. Keboard Teleoperation
+
+```bash
+# Terminal 1: Start robot
+ros2 launch humanoid_arm_teleop keyboard_gazebo.launch.py
+
+# Terminal 2: Start joystick teleop
+ros2 run humanoid_arm_teleop keyboard_teleop_node
+```
+
+### 6. MoveIt2 Motion Planning
 
 ```bash
 # Terminal 1: Start robot
