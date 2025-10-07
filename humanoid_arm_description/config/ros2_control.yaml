@@ -3,7 +3,7 @@ humanoid_arm_5dof:
     # Hardware interface parameters
     use_fake_hardware: true
     fake_sensor_commands: false
-    slowdown: 3.0
+    slowdown: 1.0
 
     # Joint limits (safety limits tighter than URDF limits)
     joint_limits:
