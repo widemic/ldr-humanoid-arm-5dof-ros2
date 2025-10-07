@@ -35,11 +35,11 @@ def generate_launch_description():
         parameters=[
             moveit_config.to_dict(),
             {"use_sim_time": use_sim_time},
-            # Increase timeout for effort control (slower than position control)
-            {"trajectory_execution.allowed_execution_duration_scaling": 3.0},
-            {"trajectory_execution.allowed_goal_duration_margin": 5.0},
-            # Increase start tolerance for effort-controlled simulation (natural drift/oscillation)
-            {"trajectory_execution.allowed_start_tolerance": 0.1},  # 0.01 rad default is too strict
+            # Reduced from 3.0 - with position control and higher speed limits, faster execution is safe
+            {"trajectory_execution.allowed_execution_duration_scaling": 1.0},
+            {"trajectory_execution.allowed_goal_duration_margin": 2.0},
+            # Start tolerance for position-controlled simulation
+            {"trajectory_execution.allowed_start_tolerance": 0.1},
         ],
     )
 
