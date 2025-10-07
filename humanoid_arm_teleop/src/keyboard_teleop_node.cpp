@@ -48,13 +48,11 @@ public:
             {"wrist_pitch_joint", {-0.25, 2.7}},
             {"wrist_roll_joint", {-3.0, 3.0}}
         };
-
-        // ✅ Correct logical → actual mapping
-        // Base=0, Shoulder=2, Elbow=1, WristPitch=3, WristRoll=4
+        
         joint_mapping_ = {
             0, // Base
-            2, // Shoulder
-            1, // Elbow
+            1, // Shoulder
+            2, // Elbow
             3, // Wrist Pitch
             4  // Wrist Roll
         };
