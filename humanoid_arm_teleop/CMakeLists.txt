@@ -64,6 +64,18 @@ ament_target_dependencies(keyboard_teleop_node
   tf2_geometry_msgs
 )
 
+# Automate teleoperation node
+add_executable(automation_demo_node
+  src/automation_demo_node.cpp
+)
+
+target_include_directories(automation_demo_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(automation_demo_node rclcpp trajectory_msgs)
+
 # Contact-based manipulation helper node
 add_executable(contact_manipulation_node
   src/contact_manipulation_node.cpp
@@ -92,6 +104,7 @@ ament_target_dependencies(contact_manipulation_node
 install(TARGETS
   joystick_teleop_node
   keyboard_teleop_node
+  automation_demo_node
   contact_manipulation_node
   DESTINATION lib/${PROJECT_NAME}
 )
