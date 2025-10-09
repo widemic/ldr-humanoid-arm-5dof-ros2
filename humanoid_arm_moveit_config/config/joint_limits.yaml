@@ -10,26 +10,26 @@ default_acceleration_scaling_factor: 1.0
 joint_limits:
   base_rotation_joint:
     has_velocity_limits: true
-    max_velocity: 3.0
+    max_velocity: 20.0
     has_acceleration_limits: true
-    max_acceleration: 3.0  # Increased from 1.0
+    max_acceleration: 20.0  # Increased from 1.0
   elbow_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 3.0  # Increased from 1.6 for faster simulation
+    max_velocity: 20.0  # Increased from 1.6 for faster simulation
     has_acceleration_limits: true
-    max_acceleration: 3.0  # Increased from 1.0
+    max_acceleration: 20.0  # Increased from 1.0
   shoulder_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 3.0
+    max_velocity: 20.0
     has_acceleration_limits: true
-    max_acceleration: 3.0  # Increased from 1.0
+    max_acceleration: 20.0  # Increased from 1.0
   wrist_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 3.0  # Increased from 1.6 for faster simulation
+    max_velocity: 20.0  # Increased from 1.6 for faster simulation
     has_acceleration_limits: true
-    max_acceleration: 3.0  # Increased from 1.0
+    max_acceleration: 20.0  # Increased from 1.0
   wrist_roll_joint:
     has_velocity_limits: true
     max_velocity: 2.0  # Increased from 0.8 for faster simulation
     has_acceleration_limits: true
-    max_acceleration: 3.0  # Increased from 1.0
+    max_acceleration: 20.0  # Increased from 1.0

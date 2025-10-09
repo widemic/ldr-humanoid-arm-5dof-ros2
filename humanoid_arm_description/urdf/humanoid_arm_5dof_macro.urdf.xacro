@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- Load actuator specifications from YAML -->
+  <xacro:property name="actuator_specs" value="${xacro.load_yaml('$(find humanoid_arm_control)/config/actuator_specs.yaml')}" />
+
   <!-- Materials -->
   <material name="base_material">
     <color rgba="0.8 0.8 1.0 1"/>
@@ -106,8 +109,10 @@
       <parent link="${prefix}shoulder_motor_link"/>
       <child link="${prefix}upper_arm_link"/>
       <axis xyz="1 0 0"/>
-      <!-- Temporarily increased for PID tuning - Real motor: 120 Nm -->
-      <limit lower="-3.14" upper="3.14" effort="500" velocity="3"/>
+      <!-- Loaded from actuator_specs.yaml -->
+      <limit lower="-3.14" upper="3.14"
+             effort="${actuator_specs['actuators']['base_rotation_joint']['motor']['max_torque']}"
+             velocity="${actuator_specs['actuators']['base_rotation_joint']['motor']['max_speed']}"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -139,7 +144,10 @@
       <parent link="${prefix}upper_arm_link"/>
       <child link="${prefix}shoulder_pitch_motor_link"/>
       <axis xyz="0 1 0"/>
-      <limit lower="-0.55" upper="3.1" effort="120" velocity="3"/>
+      <!-- Loaded from actuator_specs.yaml -->
+      <limit lower="-0.55" upper="3.1"
+             effort="${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_torque']}"
+             velocity="${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_speed']}"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -229,7 +237,10 @@
       <parent link="${prefix}elbow_motor_link"/>
       <child link="${prefix}elbow_flange_link"/>
       <axis xyz="-0.209 0 -0.978"/>
-      <limit lower="-3.14" upper="3.14" effort="60" velocity="1.6"/>
+      <!-- Loaded from actuator_specs.yaml -->
+      <limit lower="-3.14" upper="3.14"
+             effort="${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_torque']}"
+             velocity="${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_speed']}"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -319,7 +330,10 @@
       <parent link="${prefix}wrist_motor_link"/>
       <child link="${prefix}wrist_pitch_link"/>
       <axis xyz="-1 0 0"/>
-      <limit lower="-0.31" upper="2.8" effort="60" velocity="1.6"/>
+      <!-- Loaded from actuator_specs.yaml -->
+      <limit lower="-0.31" upper="2.8"
+             effort="${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_torque']}"
+             velocity="${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_speed']}"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 
@@ -409,7 +423,10 @@
       <parent link="${prefix}wrist_roll_motor_link"/>
       <child link="${prefix}end_effector_link"/>
       <axis xyz="0 -1 0"/>
-      <limit lower="-3.14" upper="3.14" effort="17" velocity="0.8"/>
+      <!-- Loaded from actuator_specs.yaml -->
+      <limit lower="-3.14" upper="3.14"
+             effort="${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_torque']}"
+             velocity="${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_speed']}"/>
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
 

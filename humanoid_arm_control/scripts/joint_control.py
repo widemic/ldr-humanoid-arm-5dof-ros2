@@ -110,7 +110,8 @@ class JointControlNode(Node):
 
         point = JointTrajectoryPoint()
         point.positions = [position]
-        point.time_from_start = Duration(sec=0, nanosec=500000000)
+        # Fast response for all joints (allows motors to reach their max speeds)
+        point.time_from_start = Duration(sec=0, nanosec=100000000)  # 0.1s
 
         traj.points = [point]
         self.joint_pubs[controller_name].publish(traj)

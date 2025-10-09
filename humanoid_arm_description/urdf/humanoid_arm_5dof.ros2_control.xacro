@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- Load actuator specifications from YAML -->
+  <xacro:property name="actuator_specs" value="${xacro.load_yaml('$(find humanoid_arm_control)/config/actuator_specs.yaml')}" />
+
   <xacro:macro name="humanoid_arm_5dof_ros2_control" params="name prefix use_fake_hardware:=true fake_sensor_commands:=false slowdown:=3.0 robot_controller:=joint_trajectory_controller">
 
     <ros2_control name="${name}" type="system">
@@ -24,12 +27,12 @@
           <param name="max">3.14</param>
         </command_interface>
         <command_interface name="velocity">
-          <param name="min">-3.0</param>
-          <param name="max">3.0</param>
+          <param name="min">-${actuator_specs['actuators']['base_rotation_joint']['motor']['max_speed']}</param>
+          <param name="max">${actuator_specs['actuators']['base_rotation_joint']['motor']['max_speed']}</param>
         </command_interface>
         <command_interface name="effort">
-          <param name="min">-120.0</param>
-          <param name="max">120.0</param>
+          <param name="min">-${actuator_specs['actuators']['base_rotation_joint']['motor']['max_torque']}</param>
+          <param name="max">${actuator_specs['actuators']['base_rotation_joint']['motor']['max_torque']}</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
@@ -45,12 +48,12 @@
           <param name="max">3.1</param>
         </command_interface>
         <command_interface name="velocity">
-          <param name="min">-3.0</param>
-          <param name="max">3.0</param>
+          <param name="min">-${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_speed']}</param>
+          <param name="max">${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_speed']}</param>
         </command_interface>
         <command_interface name="effort">
-          <param name="min">-120.0</param>
-          <param name="max">120.0</param>
+          <param name="min">-${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_torque']}</param>
+          <param name="max">${actuator_specs['actuators']['shoulder_pitch_joint']['motor']['max_torque']}</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
@@ -66,12 +69,12 @@
           <param name="max">3.14</param>
         </command_interface>
         <command_interface name="velocity">
-          <param name="min">-1.6</param>
-          <param name="max">1.6</param>
+          <param name="min">-${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_speed']}</param>
+          <param name="max">${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_speed']}</param>
         </command_interface>
         <command_interface name="effort">
-          <param name="min">-60.0</param>
-          <param name="max">60.0</param>
+          <param name="min">-${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_torque']}</param>
+          <param name="max">${actuator_specs['actuators']['elbow_pitch_joint']['motor']['max_torque']}</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
@@ -87,12 +90,12 @@
           <param name="max">2.8</param>
         </command_interface>
         <command_interface name="velocity">
-          <param name="min">-1.6</param>
-          <param name="max">1.6</param>
+          <param name="min">-${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_speed']}</param>
+          <param name="max">${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_speed']}</param>
         </command_interface>
         <command_interface name="effort">
-          <param name="min">-60.0</param>
-          <param name="max">60.0</param>
+          <param name="min">-${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_torque']}</param>
+          <param name="max">${actuator_specs['actuators']['wrist_pitch_joint']['motor']['max_torque']}</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
@@ -108,12 +111,12 @@
           <param name="max">3.14</param>
         </command_interface>
         <command_interface name="velocity">
-          <param name="min">-0.8</param>
-          <param name="max">0.8</param>
+          <param name="min">-${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_speed']}</param>
+          <param name="max">${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_speed']}</param>
         </command_interface>
         <command_interface name="effort">
-          <param name="min">-17.0</param>
-          <param name="max">17.0</param>
+          <param name="min">-${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_torque']}</param>
+          <param name="max">${actuator_specs['actuators']['wrist_roll_joint']['motor']['max_torque']}</param>
         </command_interface>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
