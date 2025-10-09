@@ -1,4 +1,7 @@
 # joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
+#
+# REFERENCE: humanoid_arm_control/config/actuator_specs.yaml for motor specifications
+# Velocity limits below are based on actual Robstride motor specs
 
 # For beginners, we downscale velocity and acceleration limits.
 # You can always specify higher scaling factors (<= 1.0) in your motion requests.  # Increase the values below to 1.0 to always move at maximum speed.
@@ -10,26 +13,26 @@ default_acceleration_scaling_factor: 1.0
 joint_limits:
   base_rotation_joint:
     has_velocity_limits: true
-    max_velocity: 20.0
+    max_velocity: 20.94  # ROBSTRIDE 04: 20.94 rad/s (200 rpm) - from actuator_specs.yaml
     has_acceleration_limits: true
-    max_acceleration: 20.0  # Increased from 1.0
+    max_acceleration: 20.0  # Conservative estimate
   elbow_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 20.0  # Increased from 1.6 for faster simulation
+    max_velocity: 20.42  # ROBSTRIDE 03: 20.42 rad/s (195 rpm) - from actuator_specs.yaml
     has_acceleration_limits: true
-    max_acceleration: 20.0  # Increased from 1.0
+    max_acceleration: 20.0  # Conservative estimate
   shoulder_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 20.0
+    max_velocity: 20.94  # ROBSTRIDE 04: 20.94 rad/s (200 rpm) - from actuator_specs.yaml
     has_acceleration_limits: true
-    max_acceleration: 20.0  # Increased from 1.0
+    max_acceleration: 20.0  # Conservative estimate
   wrist_pitch_joint:
     has_velocity_limits: true
-    max_velocity: 20.0  # Increased from 1.6 for faster simulation
+    max_velocity: 20.42  # ROBSTRIDE 03: 20.42 rad/s (195 rpm) - from actuator_specs.yaml
     has_acceleration_limits: true
-    max_acceleration: 20.0  # Increased from 1.0
+    max_acceleration: 20.0  # Conservative estimate
   wrist_roll_joint:
     has_velocity_limits: true
-    max_velocity: 2.0  # Increased from 0.8 for faster simulation
+    max_velocity: 42.94  # ROBSTRIDE 02: 42.94 rad/s (410 rpm) - from actuator_specs.yaml
     has_acceleration_limits: true
-    max_acceleration: 20.0  # Increased from 1.0
+    max_acceleration: 20.0  # Conservative estimate

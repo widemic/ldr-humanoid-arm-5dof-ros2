@@ -70,58 +70,90 @@ joint_trajectory_controller:
     allow_partial_joints_goal: false
 
     # ros2_control PID gains - Controls torque output directly
+    # BASELINE VALUES (2025-10-09) - Conservative starting point for tuning
+    # Torque output is automatically clamped to motor limits from actuator_specs.yaml
+    #
+    # TUNING METHODOLOGY:
+    # 1. Start with P only (D=0, I=0)
+    # 2. Increase P until you see oscillations or overshoot
+    # 3. Add D to dampen (start with D = P/10 to P/20)
+    # 4. Add small I only if steady-state error persists (I = P/50 to P/100)
+    # 5. Adjust i_clamp to prevent integral windup
+    # 6. Tune feedforward for smoother tracking (start at 0.0, increase slowly)
+    #
+    # Expected behavior with effort control:
+    # - You WILL see oscillations with high P
+    # - You WILL see overshoot (not perfect tracking like position interface)
+    # - Torque saturation is normal and expected
     gains:
       base_rotation_joint:
-        p: 1200.0
-        d: 50.0
-        i: 20.0
-        i_clamp: 100.0
-        ff_velocity_scale: 1.0
-      shoulder_pitch_joint:
-        p: 1500.0
-        d: 60.0
-        i: 25.0
-        i_clamp: 120.0
-        ff_velocity_scale: 1.2
-      elbow_pitch_joint:
-        p: 1000.0
-        d: 40.0
-        i: 15.0
-        i_clamp: 80.0
-        ff_velocity_scale: 1.0
-      wrist_pitch_joint:
-        p: 800.0
-        d: 35.0
-        i: 12.0
-        i_clamp: 70.0
-        ff_velocity_scale: 0.8
-      wrist_roll_joint:
-        p: 600.0
-        d: 30.0
-        i: 10.0
-        i_clamp: 60.0
-        ff_velocity_scale: 0.6
+        # ROBSTRIDE 04: 120 Nm max, 20.94 rad/s max
+        p: 200.0           # Start conservative (10-20% of previous aggressive value)
+        d: 15.0            # D ≈ P/13 (good damping ratio)
+        i: 2.0             # Small I to handle steady-state error
+        i_clamp: 30.0      # Limit integral windup (~25% of max torque)
+        ff_velocity_scale: 0.0  # Start at 0, increase if tracking lags velocity
 
-    constraints:
-      stopped_velocity_tolerance: 1.0
-      goal_time: 3.0  # Much faster with high PID gains!
-      base_rotation_joint:
-        trajectory: 0.5
-        goal: 0.2
       shoulder_pitch_joint:
-        trajectory: 0.5
-        goal: 0.2
+        # ROBSTRIDE 04: 120 Nm max, 20.94 rad/s max
+        # Higher gains due to gravity loading
+        p: 250.0           # Slightly higher for gravity compensation
+        d: 18.0            # D ≈ P/14
+        i: 3.0             # Slightly higher I for gravity sag
+        i_clamp: 35.0      # ~29% of max torque
+        ff_velocity_scale: 0.0
+
       elbow_pitch_joint:
-        trajectory: 0.5
-        goal: 0.2
+        # ROBSTRIDE 03: 60 Nm max, 20.42 rad/s max
+        p: 150.0           # Lower due to smaller motor
+        d: 12.0            # D ≈ P/12.5
+        i: 2.0
+        i_clamp: 20.0      # ~33% of max torque
+        ff_velocity_scale: 0.0
+
       wrist_pitch_joint:
-        trajectory: 0.5
-        goal: 0.2
+        # ROBSTRIDE 03: 60 Nm max, 20.42 rad/s max
+        p: 120.0           # Lighter distal joint
+        d: 10.0            # D ≈ P/12
+        i: 1.5
+        i_clamp: 18.0      # ~30% of max torque
+        ff_velocity_scale: 0.0
+
       wrist_roll_joint:
-        trajectory: 0.5
-        goal: 0.2
+        # ROBSTRIDE 02: 17 Nm max, 42.94 rad/s max (fastest joint)
+        p: 80.0            # Smallest motor, lightest load
+        d: 7.0             # D ≈ P/11.4
+        i: 1.0
+        i_clamp: 8.0       # ~47% of max torque (higher % due to small motor)
+        ff_velocity_scale: 0.0
+
+    # Trajectory constraints - relaxed for effort control (not perfect tracking)
+    constraints:
+      stopped_velocity_tolerance: 2.0  # rad/s - relaxed for effort control
+      goal_time: 5.0  # seconds - generous time allowance for baseline PID
+
+      base_rotation_joint:
+        trajectory: 1.0   # rad - relaxed from 0.5 for conservative baseline
+        goal: 0.15        # rad - tighter goal tolerance
+
+      shoulder_pitch_joint:
+        trajectory: 1.0   # rad - relaxed for gravity effects
+        goal: 0.15        # rad
+
+      elbow_pitch_joint:
+        trajectory: 1.0   # rad
+        goal: 0.15        # rad
+
+      wrist_pitch_joint:
+        trajectory: 1.0   # rad
+        goal: 0.15        # rad
+
+      wrist_roll_joint:
+        trajectory: 1.5   # rad - highest tolerance for fastest joint
+        goal: 0.20        # rad
 
 # Individual Joint Controllers (JointTrajectoryController with single joint for isolated PID tuning)
+# USE THESE for single-joint PID tuning - same baseline values as main controller
 base_rotation_joint_position_controller:
   ros__parameters:
     joints:
@@ -136,11 +168,11 @@ base_rotation_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       base_rotation_joint:
-        p: 150.0
-        d: 8.0
-        i: 5.0
-        i_clamp: 20.0
-        ff_velocity_scale: 0.1
+        p: 200.0
+        d: 15.0
+        i: 2.0
+        i_clamp: 30.0
+        ff_velocity_scale: 0.0
 
 shoulder_pitch_joint_position_controller:
   ros__parameters:
@@ -156,11 +188,11 @@ shoulder_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       shoulder_pitch_joint:
-        p: 180.0
-        d: 10.0
-        i: 8.0
-        i_clamp: 25.0
-        ff_velocity_scale: 0.12
+        p: 250.0
+        d: 18.0
+        i: 3.0
+        i_clamp: 35.0
+        ff_velocity_scale: 0.0
 
 elbow_pitch_joint_position_controller:
   ros__parameters:
@@ -176,11 +208,11 @@ elbow_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       elbow_pitch_joint:
-        p: 120.0
-        d: 7.0
-        i: 6.0
-        i_clamp: 18.0
-        ff_velocity_scale: 0.1
+        p: 150.0
+        d: 12.0
+        i: 2.0
+        i_clamp: 20.0
+        ff_velocity_scale: 0.0
 
 wrist_pitch_joint_position_controller:
   ros__parameters:
@@ -196,11 +228,11 @@ wrist_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       wrist_pitch_joint:
-        p: 100.0
-        d: 6.0
-        i: 5.0
-        i_clamp: 15.0
-        ff_velocity_scale: 0.08
+        p: 120.0
+        d: 10.0
+        i: 1.5
+        i_clamp: 18.0
+        ff_velocity_scale: 0.0
 
 wrist_roll_joint_position_controller:
   ros__parameters:
@@ -217,10 +249,10 @@ wrist_roll_joint_position_controller:
     gains:
       wrist_roll_joint:
         p: 80.0
-        d: 5.0
-        i: 4.0
-        i_clamp: 12.0
-        ff_velocity_scale: 0.06
+        d: 7.0
+        i: 1.0
+        i_clamp: 8.0
+        ff_velocity_scale: 0.0
 
 # Group Position Controller
 arm_position_controller:

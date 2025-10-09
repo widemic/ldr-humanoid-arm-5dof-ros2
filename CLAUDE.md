@@ -8,11 +8,12 @@ ROS2 Jazzy workspace for a 5-DOF humanoid robotic arm designed for whole-arm man
 
 **Key Features:**
 - Three simulation modes: mock hardware, Gazebo physics, full system (Gazebo + MoveIt + RViz)
-- Ready for Robstride actuator hardware integration (RMD-X series motors)
+- Ready for Robstride actuator hardware integration (ROBSTRIDE 04/03/02 motors)
 - No gripper/hand - designed for whole-arm contact manipulation
 - Multiple control modes: position, velocity, trajectory
 - Force/torque sensing for contact-based tasks
 - PID tuning tools with real-time GUI and test trajectory generator
+- **Single source of truth for actuator specs:** All motor limits auto-loaded from [actuator_specs.yaml](humanoid_arm_control/config/actuator_specs.yaml)
 
 ## Build and Development Commands
 
@@ -260,11 +261,14 @@ ros2 topic echo /controller_manager/activity
 ### Joint Configuration (5-DOF)
 
 **Actuated joints with Robstride motors:**
-1. `base_rotation_joint` - Base rotation (-3.14 to 3.14 rad) - **RMD-X8-PRO**
-2. `shoulder_pitch_joint` - Shoulder pitch (-0.55 to 3.1 rad) - **RMD-X8-PRO**
-3. `elbow_pitch_joint` - Elbow pitch (-3.14 to 3.14 rad) - **RMD-X6**
-4. `wrist_pitch_joint` - Wrist pitch (-0.31 to 2.8 rad) - **RMD-X6**
-5. `wrist_roll_joint` - Wrist roll (-3.14 to 3.14 rad) - **RMD-X4**
+1. `base_rotation_joint` - Base rotation (-3.14 to 3.14 rad) - **ROBSTRIDE 04** (120 Nm, 20.94 rad/s)
+2. `shoulder_pitch_joint` - Shoulder pitch (-0.55 to 3.1 rad) - **ROBSTRIDE 04** (120 Nm, 20.94 rad/s)
+3. `elbow_pitch_joint` - Elbow pitch (-3.14 to 3.14 rad) - **ROBSTRIDE 03** (60 Nm, 20.42 rad/s)
+4. `wrist_pitch_joint` - Wrist pitch (-0.31 to 2.8 rad) - **ROBSTRIDE 03** (60 Nm, 20.42 rad/s)
+5. `wrist_roll_joint` - Wrist roll (-3.14 to 3.14 rad) - **ROBSTRIDE 02** (17 Nm, 42.94 rad/s)
+
+**Motor Specifications:**
+All motor specs (torque, speed, electrical parameters) are defined in [actuator_specs.yaml](humanoid_arm_control/config/actuator_specs.yaml) and automatically loaded by URDF. See [ACTUATOR_LIMITS.md](ACTUATOR_LIMITS.md) for complete documentation.
 
 **Joint Dynamics (URDF):**
 - `damping`: 0.1 (realistic for brushless motors with gearboxes)
@@ -614,9 +618,11 @@ sudo apt install ros-jazzy-ros-gz-sim ros-jazzy-ros-gz-bridge ros-jazzy-gz-ros2-
 
 ## Important Files
 
+- **[ACTUATOR_LIMITS.md](ACTUATOR_LIMITS.md)** - Complete actuator specification documentation and configuration guide
+- **[actuator_specs.yaml](humanoid_arm_control/config/actuator_specs.yaml)** - Single source of truth for all motor specifications
 - **[PID_README.md](PID_README.md)** - Complete PID tuning guide with methods and tools
 - **[controllers.yaml](humanoid_arm_control/config/controllers.yaml)** - Controller and PID configuration
-- **[humanoid_arm_5dof_macro.urdf.xacro](humanoid_arm_description/urdf/humanoid_arm_5dof_macro.urdf.xacro)** - Joint definitions and dynamics
+- **[humanoid_arm_5dof_macro.urdf.xacro](humanoid_arm_description/urdf/humanoid_arm_5dof_macro.urdf.xacro)** - Joint definitions and dynamics (auto-loads actuator_specs.yaml)
 - **[humanoid_arm_5dof.ros2_control.xacro](humanoid_arm_description/urdf/humanoid_arm_5dof.ros2_control.xacro)** - Hardware interface configuration
   - **Effort command interfaces** added to all 5 joints with motor torque limits
 
