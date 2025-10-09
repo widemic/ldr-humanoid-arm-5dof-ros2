@@ -30,26 +30,22 @@ def get_gazebo_server(world_file='empty_world.sdf',
     Returns:
         IncludeLaunchDescription: Gazebo launch
     """
-    # Handle both string and LaunchConfiguration for world_file
-    if isinstance(world_file, str):
-        world_path = PathJoinSubstitution([
-            FindPackageShare('humanoid_arm_bringup'),
-            'worlds',
-            world_file
-        ])
-    else:
-        # It's a LaunchConfiguration
-        world_path = PathJoinSubstitution([
-            FindPackageShare('humanoid_arm_bringup'),
-            'worlds',
-            world_file
-        ])
+    # Always use PathJoinSubstitution - handles both str and LaunchConfiguration
+    world_path = PathJoinSubstitution([
+        FindPackageShare('humanoid_arm_bringup'),
+        'worlds',
+        world_file
+    ])
 
-    # Build gz_args as substitution
-    gz_args_list = []
+    # Build gz_args - use strings and substitutions properly
+    gz_args_parts = []
     if run:
-        gz_args_list.append('-r')  # Run immediately
-    gz_args_list.append(f'-v {verbose}')  # Verbosity
+        gz_args_parts.append('-r ')  # Run immediately
+    gz_args_parts.append(f'-v {verbose} ')  # Verbosity
+
+    # Concatenate all parts with the world path
+    from launch.substitutions import TextSubstitution
+    gz_args = [TextSubstitution(text=''.join(gz_args_parts)), world_path]
 
     # For gui, we'll pass it through launch_arguments since it might be LaunchConfiguration
     return IncludeLaunchDescription(
@@ -61,7 +57,7 @@ def get_gazebo_server(world_file='empty_world.sdf',
             ])
         ]),
         launch_arguments={
-            'gz_args': [' '.join(gz_args_list), ' ', world_path],
+            'gz_args': gz_args,
             'on_exit_shutdown': 'true'
         }.items()
     )
@@ -122,9 +118,45 @@ def get_clock_bridge() -> Node:
     )
 
 
-def get_standard_gazebo_setup(world_file: str = 'empty_world.sdf',
+def get_joint_ft_bridges(robot_name: str = 'humanoid_arm_5dof',
+                          world_name: str = 'humanoid_arm_empty_world') -> Node:
+    """
+    Bridge joint force-torque sensor topics from Gazebo to ROS2.
+
+    Creates bridges for all 5 joint F/T sensors to get real joint torques.
+
+    Args:
+        robot_name: Name of robot in Gazebo
+        world_name: Name of world in Gazebo
+
+    Returns:
+        Node: ROS-Gazebo bridge for joint F/T sensors
+    """
+    joints = [
+        'base_rotation_joint',
+        'shoulder_pitch_joint',
+        'elbow_pitch_joint',
+        'wrist_pitch_joint',
+        'wrist_roll_joint'
+    ]
+
+    bridge_args = []
+    for joint in joints:
+        gz_topic = f'/world/{world_name}/model/{robot_name}/joint/{joint}/force_torque'
+        ros_topic = f'/gz/{robot_name}/{joint}/force_torque'
+        bridge_args.append(f'{gz_topic}@geometry_msgs/msg/Wrench[gz.msgs.Wrench')
+
+    return Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=bridge_args,
+        output='screen'
+    )
+
+
+def get_standard_gazebo_setup(world_file = 'empty_world.sdf',
                                robot_name: str = 'humanoid_arm_5dof',
-                               gui: bool = True,
+                               gui = True,
                                robot_x: float = 0.0,
                                robot_y: float = 0.0,
                                robot_z: float = 0.5,
@@ -133,9 +165,9 @@ def get_standard_gazebo_setup(world_file: str = 'empty_world.sdf',
     Get standard Gazebo setup: server + robot spawn + clock bridge.
 
     Args:
-        world_file: Name of .sdf world file
+        world_file: Name of .sdf world file OR LaunchConfiguration
         robot_name: Name of robot in Gazebo
-        gui: Start Gazebo GUI
+        gui: Start Gazebo GUI OR LaunchConfiguration
         robot_x: Robot X position (meters)
         robot_y: Robot Y position (meters)
         robot_z: Robot Z position (meters)

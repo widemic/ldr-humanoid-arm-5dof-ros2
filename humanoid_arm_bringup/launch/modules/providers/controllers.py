@@ -134,27 +134,34 @@ def get_standard_controllers(primary_controller: str = 'joint_trajectory_control
 
     Args:
         primary_controller: 'joint_trajectory_controller', 'arm_position_controller',
-                           or 'arm_velocity_controller'
+                           'arm_velocity_controller', or LaunchConfiguration
         use_sim_time: Use simulation time
         sequence: Use event handlers for proper sequencing (recommended)
 
     Returns:
         List: Controller spawner nodes and event handlers
     """
+    from launch.substitutions import LaunchConfiguration
+
     joint_state_bc = get_joint_state_broadcaster(use_sim_time)
 
-    # Get primary controller
-    controller_map = {
-        'joint_trajectory_controller': get_trajectory_controller,
-        'arm_position_controller': get_position_controller,
-        'arm_velocity_controller': get_velocity_controller,
-    }
+    # If primary_controller is a string, validate it. If it's a LaunchConfiguration,
+    # trust it's valid and spawn it directly
+    if isinstance(primary_controller, str):
+        controller_map = {
+            'joint_trajectory_controller': get_trajectory_controller,
+            'arm_position_controller': get_position_controller,
+            'arm_velocity_controller': get_velocity_controller,
+        }
 
-    if primary_controller not in controller_map:
-        raise ValueError(f"Unknown controller: {primary_controller}. "
-                        f"Must be one of {list(controller_map.keys())}")
+        if primary_controller not in controller_map:
+            raise ValueError(f"Unknown controller: {primary_controller}. "
+                            f"Must be one of {list(controller_map.keys())}")
 
-    primary = controller_map[primary_controller](use_sim_time)
+        primary = controller_map[primary_controller](use_sim_time)
+    else:
+        # It's a LaunchConfiguration - spawn it directly by name
+        primary = spawn_controller(primary_controller, use_sim_time)
 
     if sequence:
         return [

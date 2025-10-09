@@ -1,0 +1,21 @@
+dualsense_teleop:
+  ros__parameters:
+    # Publishing rate
+    publish_rate: 10.0  # Hz - smooth control at 10Hz
+
+    # Joystick settings
+    deadzone: 0.15  # Ignore small stick movements
+    velocity_scale: 0.3  # rad/s - control speed (higher = faster)
+
+    # Button mappings (DualSense/PlayStation layout)
+    deadman_button: 4  # L1 - must be held to enable motion
+    emergency_stop_button: 5  # R1 - emergency stop
+
+    # Axis mappings (DualSense/PlayStation layout)
+    # Axes 0-1: Left stick X/Y
+    # Axes 2-3: Right stick X/Y
+    # Joint control:
+    #   Left stick X  (axis 0) -> base_rotation_joint
+    #   Left stick Y  (axis 1) -> shoulder_pitch_joint
+    #   Right stick X (axis 2) -> elbow_pitch_joint
+    #   Right stick Y (axis 3) -> wrist_pitch_joint

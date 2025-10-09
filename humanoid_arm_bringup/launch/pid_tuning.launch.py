@@ -1,213 +1,166 @@
 #!/usr/bin/env python3
-"""
-PID Tuning Launch File
 
-Launches Gazebo simulation with isolated single-joint control for PID tuning.
-Only ONE joint controller is spawned at a time to avoid multi-joint interference.
+"""
+PID Tuning launch file - Gazebo + ros2_control (no MoveIt).
+
+Simplified launch for PID tuning with:
+- Gazebo physics simulation
+- ros2_control with joint_trajectory_controller
+- rqt_joint_trajectory_controller GUI
+- Event-based sequencing for reliability
 
 Usage:
     ros2 launch humanoid_arm_bringup pid_tuning.launch.py
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint_to_tune:=shoulder_pitch_joint
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint_to_tune:=elbow_pitch_joint use_gui:=false
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py world_file:=empty_world.sdf
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py gazebo_gui:=false
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py launch_rqt:=false
 """
 
-import os
+import sys
+from pathlib import Path
+
+# Add modules directory to Python path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
+from launch.event_handlers import OnProcessExit
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-from ament_index_python.packages import get_package_share_directory
-import xacro
+from launch_ros.parameter_descriptions import ParameterValue
+from launch_ros.actions import Node
+
+# Import our custom modules
+from modules import gazebo, controllers
 
 
 def generate_launch_description():
-    # Declare launch arguments
+    # ========== Launch Arguments ==========
     declared_arguments = [
-        DeclareLaunchArgument(
-            'joint_to_tune',
-            default_value='base_rotation_joint',
-            description='Joint to tune: base_rotation_joint, shoulder_pitch_joint, elbow_pitch_joint, wrist_pitch_joint, wrist_roll_joint'
-        ),
         DeclareLaunchArgument(
             'world_file',
             default_value='empty_world.sdf',
-            description='Gazebo world file (empty_world.sdf, contact_manipulation_arena.sdf, etc.)'
+            description='Gazebo world file (in humanoid_arm_bringup/worlds/)'
         ),
         DeclareLaunchArgument(
-            'use_gui',
+            'gazebo_gui',
             default_value='true',
-            description='Launch rqt_joint_trajectory_controller GUI for manual control'
+            description='Launch Gazebo GUI'
         ),
         DeclareLaunchArgument(
-            'use_sim_time',
+            'launch_rqt',
             default_value='true',
-            description='Use simulation time'
+            description='Launch rqt_joint_trajectory_controller GUI'
         ),
     ]
 
-    # Get launch arguments
-    joint_to_tune = LaunchConfiguration('joint_to_tune')
+    # ========== Configuration ==========
     world_file = LaunchConfiguration('world_file')
-    use_gui = LaunchConfiguration('use_gui')
-    use_sim_time = LaunchConfiguration('use_sim_time')
+    gazebo_gui = LaunchConfiguration('gazebo_gui')
+    launch_rqt = LaunchConfiguration('launch_rqt')
+    use_sim_time = True
 
-    # Build URDF from xacro
-    urdf_file = os.path.join(
-        get_package_share_directory('humanoid_arm_description'),
+    # ========== Gazebo ==========
+    gazebo_nodes = gazebo.get_standard_gazebo_setup(
+        world_file=world_file,
+        robot_name='humanoid_arm_5dof',
+        gui=gazebo_gui
+    )
+    gazebo_server = gazebo_nodes[0]
+    spawn_robot = gazebo_nodes[1]
+    clock_bridge = gazebo_nodes[2]
+
+    # Bridge for joint force-torque sensors (real joint torques)
+    ft_bridge = gazebo.get_joint_ft_bridges(
+        robot_name='humanoid_arm_5dof',
+        world_name='humanoid_arm_empty_world'
+    )
+
+    # ========== Robot Description ==========
+    urdf_path = PathJoinSubstitution([
+        FindPackageShare('humanoid_arm_description'),
         'urdf',
         'humanoid_arm_5dof_ros2_control.urdf.xacro'
-    )
-    robot_description = {
-        'robot_description': xacro.process_file(
-            urdf_file,
-            mappings={'use_fake_hardware': 'false'}
-        ).toxml()
-    }
-
-    # World file path
-    world_file_path = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_bringup'),
-        'worlds',
-        world_file
     ])
 
-    # ============================================================================
-    # NODES
-    # ============================================================================
-
-    # Gazebo Harmonic
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                FindPackageShare('ros_gz_sim'),
-                'launch',
-                'gz_sim.launch.py'
-            ])
+    robot_description_content = ParameterValue(
+        Command([
+            'xacro ', urdf_path,
+            ' use_fake_hardware:=false',
+            ' robot_controller:=joint_trajectory_controller'
         ]),
-        launch_arguments={'gz_args': ['-r -v4 ', world_file_path]}.items()
+        value_type=str
     )
 
-    # Clock bridge (Gazebo time → ROS time)
-    clock_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
-        output='screen'
-    )
-
-    # Robot state publisher
-    robot_state_pub = Node(
+    robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        output='both',
-        parameters=[robot_description, {'use_sim_time': use_sim_time}]
-    )
-
-    # Spawn robot in Gazebo
-    spawn_robot = Node(
-        package='ros_gz_sim',
-        executable='create',
-        arguments=[
-            '-topic', '/robot_description',
-            '-name', 'humanoid_arm_5dof',
-            '-z', '0.5'
-        ],
         output='screen',
-        parameters=[{'use_sim_time': use_sim_time}]
+        parameters=[
+            {'robot_description': robot_description_content},
+            {'use_sim_time': use_sim_time}
+        ]
     )
 
-    # Joint state broadcaster
-    joint_state_broadcaster = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_state_broadcaster', '--controller-manager', '/controller_manager'],
-        parameters=[{'use_sim_time': use_sim_time}]
-    )
+    # ========== Controllers ==========
+    # Load individual joint controllers for isolated PID tuning
+    from launch_ros.actions import Node as LaunchNode
 
-    # Controller configuration file path
-    controllers_yaml = PathJoinSubstitution([
-        FindPackageShare('humanoid_arm_control'),
-        'config',
-        'controllers.yaml'
-    ])
+    joint_state_broadcaster_spawner = controllers.get_joint_state_broadcaster(use_sim_time)
 
-    # Single joint controller (dynamically named based on joint_to_tune)
-    # Note: This uses OpaqueFunction to access the launch configuration value
-    from launch.actions import OpaqueFunction
+    # Individual joint controllers (all inactive initially - GUI will enable them)
+    individual_controllers = [
+        controllers.spawn_controller('base_rotation_joint_position_controller', use_sim_time, inactive=True),
+        controllers.spawn_controller('shoulder_pitch_joint_position_controller', use_sim_time, inactive=True),
+        controllers.spawn_controller('elbow_pitch_joint_position_controller', use_sim_time, inactive=True),
+        controllers.spawn_controller('wrist_pitch_joint_position_controller', use_sim_time, inactive=True),
+        controllers.spawn_controller('wrist_roll_joint_position_controller', use_sim_time, inactive=True),
+    ]
 
-    def create_controller_spawner(context):
-        joint_name = joint_to_tune.perform(context)
-        controller_name = f"{joint_name}_position_controller"
-
-        return [Node(
-            package='controller_manager',
-            executable='spawner',
-            arguments=[
-                controller_name,
-                '--controller-manager', '/controller_manager',
-                '--ros-args',
-                '--params-file', controllers_yaml
-            ],
-            parameters=[{'use_sim_time': use_sim_time}]
-        )]
-
-    single_joint_controller = OpaqueFunction(function=create_controller_spawner)
-
-    # RQt Joint Trajectory Controller GUI
-    rqt_gui = Node(
-        package='rqt_joint_trajectory_controller',
-        executable='rqt_joint_trajectory_controller',
-        name='rqt_joint_trajectory_controller',
-        output='screen',
-        parameters=[{'use_sim_time': use_sim_time}],
-        condition=IfCondition(use_gui)
-    )
-
-    # ============================================================================
-    # TIMING SEQUENCE
-    # ============================================================================
-
-    # t=0s: Gazebo, clock bridge, robot_state_publisher start immediately
-    # t=3s: Spawn robot in Gazebo
-    # t=5s: Start joint state broadcaster
-    # t=7s: Start single joint controller
-    # t=9s: Start GUI
-
-    delayed_spawn = TimerAction(
-        period=3.0,
+    # ========== Event-based Sequencing ==========
+    # Spawn robot after Gazebo starts (small delay for Gazebo initialization)
+    spawn_robot_delayed = TimerAction(
+        period=2.0,
         actions=[spawn_robot]
     )
 
-    delayed_joint_state_broadcaster = TimerAction(
-        period=5.0,
-        actions=[joint_state_broadcaster]
+    # Start controllers after robot is spawned
+    start_controllers = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=spawn_robot,
+            on_exit=[joint_state_broadcaster_spawner] + individual_controllers
+        )
     )
 
-    delayed_controller = TimerAction(
-        period=7.0,
-        actions=[single_joint_controller]
+    # ========== RQT Joint Trajectory Controller ==========
+    # Launch after controllers are ready
+    # Note: RQT manages its own node name internally, don't specify 'name' parameter
+    rqt_node = Node(
+        package='rqt_joint_trajectory_controller',
+        executable='rqt_joint_trajectory_controller',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        condition=IfCondition(launch_rqt)
     )
 
-    delayed_gui = TimerAction(
-        period=9.0,
-        actions=[rqt_gui]
+    # Start RQT after joint_state_broadcaster is ready
+    start_rqt = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[rqt_node]
+        )
     )
 
-    # ============================================================================
-    # LAUNCH DESCRIPTION
-    # ============================================================================
+    # ========== Compose Launch Description ==========
+    nodes_to_start = [
+        gazebo_server,
+        clock_bridge,
+        ft_bridge,
+        robot_state_publisher,
+        spawn_robot_delayed,
+        start_controllers,
+        start_rqt,
+    ]
 
-    return LaunchDescription(
-        declared_arguments + [
-            gazebo,
-            clock_bridge,
-            robot_state_pub,
-            delayed_spawn,
-            delayed_joint_state_broadcaster,
-            delayed_controller,
-            delayed_gui,
-        ]
-    )
+    return LaunchDescription(declared_arguments + nodes_to_start)

@@ -59,7 +59,7 @@ joint_trajectory_controller:
       - wrist_roll_joint
 
     command_interfaces:
-      - position  # Use Gazebo's internal PID for perfect tracking
+      - effort
 
     state_interfaces:
       - position
@@ -69,58 +69,57 @@ joint_trajectory_controller:
     action_monitor_rate: 20.0
     allow_partial_joints_goal: false
 
-    # PID gains - not used with position interface (Gazebo handles PID internally)
-    # These are kept for compatibility but ignored by Gazebo
+    # ros2_control PID gains - Controls torque output directly
     gains:
       base_rotation_joint:
-        p: 150.0
-        d: 8.0
-        i: 5.0
-        i_clamp: 20.0
-        ff_velocity_scale: 0.1
+        p: 1200.0
+        d: 50.0
+        i: 20.0
+        i_clamp: 100.0
+        ff_velocity_scale: 1.0
       shoulder_pitch_joint:
-        p: 180.0
-        d: 10.0
-        i: 8.0
-        i_clamp: 25.0
-        ff_velocity_scale: 0.12
+        p: 1500.0
+        d: 60.0
+        i: 25.0
+        i_clamp: 120.0
+        ff_velocity_scale: 1.2
       elbow_pitch_joint:
-        p: 120.0
-        d: 7.0
-        i: 6.0
-        i_clamp: 18.0
-        ff_velocity_scale: 0.1
+        p: 1000.0
+        d: 40.0
+        i: 15.0
+        i_clamp: 80.0
+        ff_velocity_scale: 1.0
       wrist_pitch_joint:
-        p: 100.0
-        d: 6.0
-        i: 5.0
-        i_clamp: 15.0
-        ff_velocity_scale: 0.08
+        p: 800.0
+        d: 35.0
+        i: 12.0
+        i_clamp: 70.0
+        ff_velocity_scale: 0.8
       wrist_roll_joint:
-        p: 80.0
-        d: 5.0
-        i: 4.0
-        i_clamp: 12.0
-        ff_velocity_scale: 0.06
+        p: 600.0
+        d: 30.0
+        i: 10.0
+        i_clamp: 60.0
+        ff_velocity_scale: 0.6
 
     constraints:
-      stopped_velocity_tolerance: 0.5  # Realistic for any control mode
-      goal_time: 15.0  # Allow time to reach goal
+      stopped_velocity_tolerance: 1.0
+      goal_time: 3.0  # Much faster with high PID gains!
       base_rotation_joint:
-        trajectory: 0.3  # Relaxed - even position control needs headroom
-        goal: 0.1
+        trajectory: 0.5
+        goal: 0.2
       shoulder_pitch_joint:
-        trajectory: 0.3  # Relaxed from 0.1
-        goal: 0.1
+        trajectory: 0.5
+        goal: 0.2
       elbow_pitch_joint:
-        trajectory: 0.3
-        goal: 0.1
+        trajectory: 0.5
+        goal: 0.2
       wrist_pitch_joint:
-        trajectory: 0.3
-        goal: 0.1
+        trajectory: 0.5
+        goal: 0.2
       wrist_roll_joint:
-        trajectory: 0.3
-        goal: 0.1
+        trajectory: 0.5
+        goal: 0.2
 
 # Individual Joint Controllers (JointTrajectoryController with single joint for isolated PID tuning)
 base_rotation_joint_position_controller:

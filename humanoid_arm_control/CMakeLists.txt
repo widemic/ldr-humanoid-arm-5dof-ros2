@@ -76,6 +76,8 @@ install(PROGRAMS
   scripts/reach_target_ik.py
   scripts/reach_target_moveit.py
   scripts/reach_with_ik.py
+  scripts/joint_control.py
+  scripts/joint_control_wrapper.sh
   DESTINATION lib/${PROJECT_NAME}
 )
 

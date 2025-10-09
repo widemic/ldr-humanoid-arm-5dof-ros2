@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Gazebo simulation launch file - Physics simulation without MoveIt.
+Simple Gazebo launch with ros2_control (effort interface) - Modular style.
 
-Launches Gazebo Harmonic with the humanoid arm for physics-based testing,
-PID tuning, and contact manipulation experiments.
+Minimal setup for physics simulation with effort control.
+Perfect for DualSense teleoperation testing.
 
 Usage:
-    ros2 launch humanoid_arm_bringup gazebo.launch.py
-    ros2 launch humanoid_arm_bringup gazebo.launch.py world_file:=contact_manipulation_arena.sdf
-    ros2 launch humanoid_arm_bringup gazebo.launch.py gui:=false
+    ros2 launch humanoid_arm_bringup gazebo_simple.launch.py
+    ros2 launch humanoid_arm_bringup gazebo_simple.launch.py world_file:=contact_manipulation_arena.sdf
+    ros2 launch humanoid_arm_bringup gazebo_simple.launch.py gui:=false
 """
 
 import sys
@@ -25,7 +25,7 @@ from launch_ros.substitutions import FindPackageShare
 from launch_ros.parameter_descriptions import ParameterValue
 
 # Import our custom modules
-from modules import robot_description, controllers, sensors, gazebo
+from modules import robot_description, controllers, gazebo
 
 
 def generate_launch_description():
@@ -37,33 +37,15 @@ def generate_launch_description():
             description='Gazebo world file (in humanoid_arm_bringup/worlds/)'
         ),
         DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='true',
-            description='Use simulation time from Gazebo /clock'
-        ),
-        DeclareLaunchArgument(
             'gui',
             default_value='true',
             description='Launch Gazebo GUI (false for headless)'
-        ),
-        DeclareLaunchArgument(
-            'robot_controller',
-            default_value='joint_trajectory_controller',
-            description='Controller type for URDF configuration'
-        ),
-        DeclareLaunchArgument(
-            'initial_joint_controller',
-            default_value='joint_trajectory_controller',
-            description='Primary controller to spawn'
         ),
     ]
 
     # ========== Configuration ==========
     world_file = LaunchConfiguration('world_file')
-    use_sim_time = LaunchConfiguration('use_sim_time')
     gui = LaunchConfiguration('gui')
-    robot_controller = LaunchConfiguration('robot_controller')
-    initial_joint_controller = LaunchConfiguration('initial_joint_controller')
 
     # ========== Gazebo ==========
     gazebo_nodes = gazebo.get_standard_gazebo_setup(
@@ -73,9 +55,6 @@ def generate_launch_description():
     )
 
     # ========== Robot Description ==========
-    # Robot state publisher - pass parameters directly, don't pre-load URDF
-    # (xacro processing happens inside robot_state_publisher with substitutions)
-
     urdf_path = PathJoinSubstitution([
         FindPackageShare('humanoid_arm_description'),
         'urdf',
@@ -86,7 +65,7 @@ def generate_launch_description():
         Command([
             'xacro ', urdf_path,
             ' use_fake_hardware:=false',
-            ' robot_controller:=', robot_controller
+            ' robot_controller:=joint_trajectory_controller'
         ]),
         value_type=str
     )
@@ -96,38 +75,22 @@ def generate_launch_description():
         use_sim_time=True
     )
 
-    # ========== Delay Robot Spawn ==========
-    # Spawn robot in Gazebo after robot_state_publisher starts
+    # ========== Spawn Robot (Delayed) ==========
     spawn_robot_delayed = TimerAction(
         period=3.0,
         actions=[gazebo_nodes[1]]  # spawn_robot is second in list
     )
 
-    # ========== Controllers ==========
-    # Get joint_state_broadcaster + primary controller
+    # ========== Controllers (Delayed) ==========
     controller_nodes = controllers.get_standard_controllers(
-        primary_controller=initial_joint_controller,
+        primary_controller='joint_trajectory_controller',
         use_sim_time=True,
         sequence=True
     )
 
-    # Delay controllers after spawn
     controllers_delayed = TimerAction(
         period=5.0,
         actions=controller_nodes
-    )
-
-    # ========== Sensors ==========
-    # Get all sensor broadcasters
-    sensor_nodes = sensors.get_all_sensors(
-        use_sim_time=True,
-        after_node=controller_nodes[0]  # After joint_state_broadcaster
-    )
-
-    # Delay sensors
-    sensors_delayed = TimerAction(
-        period=7.0,
-        actions=[sensor_nodes] if not isinstance(sensor_nodes, list) else sensor_nodes
     )
 
     # ========== Compose Launch Description ==========
@@ -137,7 +100,6 @@ def generate_launch_description():
         robot_state_pub,
         spawn_robot_delayed,
         controllers_delayed,
-        sensors_delayed,
     ]
 
     return LaunchDescription(declared_arguments + nodes_to_start)

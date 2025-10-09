@@ -189,12 +189,60 @@
       </sensor>
     </gazebo>
 
-    <!-- Force-Torque sensor -->
-    <gazebo reference="${prefix}wrist_roll_joint">
-      <sensor name="${prefix}tcp_ft_sensor" type="force_torque">
+    <!-- Force-Torque sensors for all joints (for real torque readings) -->
+    <gazebo reference="${prefix}base_rotation_joint">
+      <sensor name="${prefix}base_rotation_ft_sensor" type="force_torque">
         <always_on>true</always_on>
         <update_rate>100.0</update_rate>
-        <visualize>true</visualize>
+        <visualize>false</visualize>
+        <force_torque>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </force_torque>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}shoulder_pitch_joint">
+      <sensor name="${prefix}shoulder_pitch_ft_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
+        <force_torque>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </force_torque>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}elbow_pitch_joint">
+      <sensor name="${prefix}elbow_pitch_ft_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
+        <force_torque>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </force_torque>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_pitch_joint">
+      <sensor name="${prefix}wrist_pitch_ft_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
+        <force_torque>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </force_torque>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${prefix}wrist_roll_joint">
+      <sensor name="${prefix}wrist_roll_ft_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>100.0</update_rate>
+        <visualize>false</visualize>
         <force_torque>
           <frame>child</frame>
           <measure_direction>child_to_parent</measure_direction>

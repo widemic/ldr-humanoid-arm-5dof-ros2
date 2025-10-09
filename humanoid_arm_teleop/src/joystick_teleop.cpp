@@ -6,7 +6,7 @@ namespace humanoid_arm_teleop
 JoystickTeleop::JoystickTeleop() : Node("joystick_teleop")
 {
   // Parameters
-  publish_rate_ = this->declare_parameter("publish_rate", 50.0);
+  publish_rate_ = this->declare_parameter("publish_rate", 20.0);
 
   // Initialize vectors (5 joints)
   joint_names_ = {
@@ -73,8 +73,6 @@ void JoystickTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   if (msg->buttons.size() < 5 || msg->axes.size() < 4)
   {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-                         "Insufficient joystick buttons/axes");
     return;
   }
 
@@ -84,69 +82,68 @@ void JoystickTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   if (deadman_pressed_ && !previous_deadman)
   {
-    RCLCPP_INFO(this->get_logger(), "Deadman switch activated - control enabled");
-    // Reset target to current position when deadman is pressed
+    RCLCPP_INFO(this->get_logger(), "Control enabled (L1 pressed)");
+    // Sync target to current when deadman is pressed
     target_positions_ = current_positions_;
-  }
-  else if (!deadman_pressed_ && previous_deadman)
-  {
-    RCLCPP_INFO(this->get_logger(), "Deadman switch released - control disabled");
   }
 
   if (!deadman_pressed_)
   {
-    // Zero all velocities if deadman not pressed
-    std::fill(joint_velocities_.begin(), joint_velocities_.end(), 0.0);
     return;
   }
 
   // Emergency stop (button 5 - R1)
   if (msg->buttons[5])
   {
-    std::fill(joint_velocities_.begin(), joint_velocities_.end(), 0.0);
     target_positions_ = current_positions_;
-    RCLCPP_WARN(this->get_logger(), "Emergency stop activated!");
+    RCLCPP_WARN(this->get_logger(), "Emergency stop!");
     return;
   }
 
-  // Individual joint velocity control
-  // Velocity scaling factors (rad/s per full joystick deflection)
-  double base_velocity_scale = 1.0;
-  double shoulder_velocity_scale = 1.0;
-  double elbow_velocity_scale = 0.8;
-  double wrist_velocity_scale = 0.8;
-  double roll_velocity_scale = 0.6;
-
   // Apply deadzone
-  double deadzone = 0.1;
+  double deadzone = 0.15;
   auto apply_deadzone = [deadzone](double value) {
     return (std::abs(value) < deadzone) ? 0.0 : value;
   };
 
+  // Calculate velocity commands from joystick (rad/s)
+  double step_size = 0.05 / publish_rate_;  // Move 0.05 rad per second
+
   // Left stick - base rotation and shoulder pitch
-  joint_velocities_[0] = apply_deadzone(msg->axes[0]) * base_velocity_scale;
-  joint_velocities_[1] = -apply_deadzone(msg->axes[1]) * shoulder_velocity_scale;  // Inverted Y
+  joint_velocities_[0] = apply_deadzone(msg->axes[0]) * 1.0;
+  joint_velocities_[1] = -apply_deadzone(msg->axes[1]) * 1.0;  // Inverted Y
 
   // Right stick - elbow and wrist pitch
-  joint_velocities_[2] = apply_deadzone(msg->axes[2]) * elbow_velocity_scale;
-  joint_velocities_[3] = -apply_deadzone(msg->axes[3]) * wrist_velocity_scale;  // Inverted Y
+  joint_velocities_[2] = apply_deadzone(msg->axes[2]) * 0.8;
+  joint_velocities_[3] = -apply_deadzone(msg->axes[3]) * 0.8;  // Inverted Y
 
-  // Triggers for wrist roll (R2/L2 are buttons on DualSense)
+  // Triggers for wrist roll (R2/L2)
   double wrist_roll_vel = 0.0;
   if (msg->buttons.size() > 7)
   {
-    if (msg->buttons[6]) wrist_roll_vel += roll_velocity_scale;  // R2
-    if (msg->buttons[7]) wrist_roll_vel -= roll_velocity_scale;  // L2
+    if (msg->buttons[6]) wrist_roll_vel += 0.6;  // R2
+    if (msg->buttons[7]) wrist_roll_vel -= 0.6;  // L2
   }
   joint_velocities_[4] = wrist_roll_vel;
+
+  // Integrate velocities to target positions
+  for (size_t i = 0; i < 5; ++i)
+  {
+    target_positions_[i] += joint_velocities_[i] * step_size;
+  }
+
+  // Apply joint limits
+  target_positions_[0] = std::clamp(target_positions_[0], -3.14, 3.14);
+  target_positions_[1] = std::clamp(target_positions_[1], -0.55, 3.1);
+  target_positions_[2] = std::clamp(target_positions_[2], -3.14, 3.14);
+  target_positions_[3] = std::clamp(target_positions_[3], -0.31, 2.8);
+  target_positions_[4] = std::clamp(target_positions_[4], -3.14, 3.14);
 }
 
 void JoystickTeleop::publishJointCommands()
 {
   if (!joint_state_received_)
   {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                         "Waiting for joint states...");
     return;
   }
 
@@ -155,42 +152,17 @@ void JoystickTeleop::publishJointCommands()
     return;
   }
 
-  // Integrate velocities to update target positions
-  double dt = 1.0 / publish_rate_;
-  for (size_t i = 0; i < 5; ++i)
-  {
-    target_positions_[i] += joint_velocities_[i] * dt;
-  }
-
-  // Apply joint limits (from URDF)
-  // base_rotation_joint: -3.14 to 3.14
-  target_positions_[0] = std::clamp(target_positions_[0], -3.14, 3.14);
-  // shoulder_pitch_joint: -0.55 to 3.1
-  target_positions_[1] = std::clamp(target_positions_[1], -0.55, 3.1);
-  // elbow_pitch_joint: -3.14 to 3.14
-  target_positions_[2] = std::clamp(target_positions_[2], -3.14, 3.14);
-  // wrist_pitch_joint: -0.31 to 2.8
-  target_positions_[3] = std::clamp(target_positions_[3], -0.31, 2.8);
-  // wrist_roll_joint: -3.14 to 3.14
-  target_positions_[4] = std::clamp(target_positions_[4], -3.14, 3.14);
-
-  // Publish as joint trajectory (for trajectory controller)
+  // Publish as joint trajectory
   auto trajectory_msg = trajectory_msgs::msg::JointTrajectory();
   trajectory_msg.header.stamp = this->now();
   trajectory_msg.joint_names = joint_names_;
 
   trajectory_msgs::msg::JointTrajectoryPoint point;
   point.positions = target_positions_;
-  point.velocities = joint_velocities_;
-  point.time_from_start = rclcpp::Duration::from_nanoseconds(static_cast<int64_t>(dt * 1e9));
+  point.time_from_start = rclcpp::Duration::from_seconds(0.5);
 
   trajectory_msg.points.push_back(point);
   joint_trajectory_pub_->publish(trajectory_msg);
-
-  // Also publish to position controller (if active)
-  auto position_msg = std_msgs::msg::Float64MultiArray();
-  position_msg.data = target_positions_;
-  joint_position_pub_->publish(position_msg);
 }
 
 }  // namespace humanoid_arm_teleop

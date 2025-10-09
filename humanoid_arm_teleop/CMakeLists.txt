@@ -88,11 +88,28 @@ ament_target_dependencies(contact_manipulation_node
   tf2_geometry_msgs
 )
 
+# DualSense simple teleoperation node
+add_executable(dualsense_teleop_node
+  src/dualsense_teleop.cpp
+)
+
+target_include_directories(dualsense_teleop_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(dualsense_teleop_node
+  rclcpp
+  sensor_msgs
+  trajectory_msgs
+)
+
 # Install executables
 install(TARGETS
   joystick_teleop_node
   keyboard_teleop_node
   contact_manipulation_node
+  dualsense_teleop_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

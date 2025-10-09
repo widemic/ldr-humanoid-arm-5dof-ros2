@@ -1,0 +1,1146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>JointControlWindow</class>
+ <widget class="QMainWindow" name="JointControlWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Joint Control &amp; Effort Monitor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <item>
+     <widget class="QLabel" name="titleLabel">
+      <property name="text">
+       <string>🦾 Joint Control &amp; Effort Monitor</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">font-size: 20px; font-weight: bold; padding: 15px; background-color: #2c3e50; color: white;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #f0f0f0;</string>
+      </property>
+      <widget class="QWidget" name="scrollAreaContents">
+       <layout class="QVBoxLayout" name="verticalLayout_scroll">
+        <item>
+         <!-- Joint 0: base_rotation_joint -->
+         <widget class="QGroupBox" name="joint0Group">
+          <property name="title">
+           <string>  base_rotation_joint  </string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QGroupBox {
+              font-weight: bold;
+              font-size: 13px;
+              background-color: white;
+              border: 2px solid #FF5252;
+              border-radius: 5px;
+              margin-top: 10px;
+              padding: 10px;
+            }
+            QGroupBox::title {
+              subcontrol-origin: margin;
+              subcontrol-position: top center;
+              padding: 5px 10px;
+            }
+           </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_joint0">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint0_top">
+             <item>
+              <widget class="QCheckBox" name="enableCheck0">
+               <property name="text">
+                <string>ENABLE</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QCheckBox { font-weight: bold; font-size: 12px; }
+                 QCheckBox::indicator { width: 20px; height: 20px; }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_pos0_title">
+               <property name="text">
+                <string>Pos:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="posLabel0">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_vel0_title">
+               <property name="text">
+                <string>Vel:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="velLabel0">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad/s</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_joint0">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint0_slider">
+             <item>
+              <widget class="QLabel" name="label_target0">
+               <property name="text">
+                <string>Target:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider0">
+               <property name="minimum">
+                <number>-314</number>
+               </property>
+               <property name="maximum">
+                <number>314</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="targetLabel0">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint0_effort">
+             <item>
+              <widget class="QLabel" name="label_effort0">
+               <property name="text">
+                <string>Effort:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="effortBar0">
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QProgressBar {
+                   border: 2px solid #ccc;
+                   border-radius: 5px;
+                   background-color: #ecf0f1;
+                   height: 25px;
+                 }
+                 QProgressBar::chunk {
+                   background-color: #FF5252;
+                 }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="effortLabel0">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.0 Nm</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <!-- Joint 1: shoulder_pitch_joint -->
+         <widget class="QGroupBox" name="joint1Group">
+          <property name="title">
+           <string>  shoulder_pitch_joint  </string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QGroupBox {
+              font-weight: bold;
+              font-size: 13px;
+              background-color: white;
+              border: 2px solid #FF9800;
+              border-radius: 5px;
+              margin-top: 10px;
+              padding: 10px;
+            }
+            QGroupBox::title {
+              subcontrol-origin: margin;
+              subcontrol-position: top center;
+              padding: 5px 10px;
+            }
+           </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_joint1">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint1_top">
+             <item>
+              <widget class="QCheckBox" name="enableCheck1">
+               <property name="text">
+                <string>ENABLE</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QCheckBox { font-weight: bold; font-size: 12px; }
+                 QCheckBox::indicator { width: 20px; height: 20px; }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_pos1_title">
+               <property name="text">
+                <string>Pos:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="posLabel1">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_vel1_title">
+               <property name="text">
+                <string>Vel:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="velLabel1">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad/s</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_joint1">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint1_slider">
+             <item>
+              <widget class="QLabel" name="label_target1">
+               <property name="text">
+                <string>Target:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider1">
+               <property name="minimum">
+                <number>-55</number>
+               </property>
+               <property name="maximum">
+                <number>310</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="targetLabel1">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint1_effort">
+             <item>
+              <widget class="QLabel" name="label_effort1">
+               <property name="text">
+                <string>Effort:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="effortBar1">
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QProgressBar {
+                   border: 2px solid #ccc;
+                   border-radius: 5px;
+                   background-color: #ecf0f1;
+                   height: 25px;
+                 }
+                 QProgressBar::chunk {
+                   background-color: #FF9800;
+                 }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="effortLabel1">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.0 Nm</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <!-- Joint 2: elbow_pitch_joint -->
+         <widget class="QGroupBox" name="joint2Group">
+          <property name="title">
+           <string>  elbow_pitch_joint  </string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QGroupBox {
+              font-weight: bold;
+              font-size: 13px;
+              background-color: white;
+              border: 2px solid #4CAF50;
+              border-radius: 5px;
+              margin-top: 10px;
+              padding: 10px;
+            }
+            QGroupBox::title {
+              subcontrol-origin: margin;
+              subcontrol-position: top center;
+              padding: 5px 10px;
+            }
+           </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_joint2">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint2_top">
+             <item>
+              <widget class="QCheckBox" name="enableCheck2">
+               <property name="text">
+                <string>ENABLE</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QCheckBox { font-weight: bold; font-size: 12px; }
+                 QCheckBox::indicator { width: 20px; height: 20px; }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_pos2_title">
+               <property name="text">
+                <string>Pos:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="posLabel2">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_vel2_title">
+               <property name="text">
+                <string>Vel:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="velLabel2">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad/s</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_joint2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint2_slider">
+             <item>
+              <widget class="QLabel" name="label_target2">
+               <property name="text">
+                <string>Target:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider2">
+               <property name="minimum">
+                <number>-314</number>
+               </property>
+               <property name="maximum">
+                <number>314</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="targetLabel2">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint2_effort">
+             <item>
+              <widget class="QLabel" name="label_effort2">
+               <property name="text">
+                <string>Effort:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="effortBar2">
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QProgressBar {
+                   border: 2px solid #ccc;
+                   border-radius: 5px;
+                   background-color: #ecf0f1;
+                   height: 25px;
+                 }
+                 QProgressBar::chunk {
+                   background-color: #4CAF50;
+                 }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="effortLabel2">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.0 Nm</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <!-- Joint 3: wrist_pitch_joint -->
+         <widget class="QGroupBox" name="joint3Group">
+          <property name="title">
+           <string>  wrist_pitch_joint  </string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QGroupBox {
+              font-weight: bold;
+              font-size: 13px;
+              background-color: white;
+              border: 2px solid #2196F3;
+              border-radius: 5px;
+              margin-top: 10px;
+              padding: 10px;
+            }
+            QGroupBox::title {
+              subcontrol-origin: margin;
+              subcontrol-position: top center;
+              padding: 5px 10px;
+            }
+           </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_joint3">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint3_top">
+             <item>
+              <widget class="QCheckBox" name="enableCheck3">
+               <property name="text">
+                <string>ENABLE</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QCheckBox { font-weight: bold; font-size: 12px; }
+                 QCheckBox::indicator { width: 20px; height: 20px; }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_pos3_title">
+               <property name="text">
+                <string>Pos:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="posLabel3">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_vel3_title">
+               <property name="text">
+                <string>Vel:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="velLabel3">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad/s</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_joint3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint3_slider">
+             <item>
+              <widget class="QLabel" name="label_target3">
+               <property name="text">
+                <string>Target:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider3">
+               <property name="minimum">
+                <number>-31</number>
+               </property>
+               <property name="maximum">
+                <number>280</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="targetLabel3">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint3_effort">
+             <item>
+              <widget class="QLabel" name="label_effort3">
+               <property name="text">
+                <string>Effort:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="effortBar3">
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QProgressBar {
+                   border: 2px solid #ccc;
+                   border-radius: 5px;
+                   background-color: #ecf0f1;
+                   height: 25px;
+                 }
+                 QProgressBar::chunk {
+                   background-color: #2196F3;
+                 }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="effortLabel3">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.0 Nm</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <!-- Joint 4: wrist_roll_joint -->
+         <widget class="QGroupBox" name="joint4Group">
+          <property name="title">
+           <string>  wrist_roll_joint  </string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+            QGroupBox {
+              font-weight: bold;
+              font-size: 13px;
+              background-color: white;
+              border: 2px solid #9C27B0;
+              border-radius: 5px;
+              margin-top: 10px;
+              padding: 10px;
+            }
+            QGroupBox::title {
+              subcontrol-origin: margin;
+              subcontrol-position: top center;
+              padding: 5px 10px;
+            }
+           </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_joint4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint4_top">
+             <item>
+              <widget class="QCheckBox" name="enableCheck4">
+               <property name="text">
+                <string>ENABLE</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QCheckBox { font-weight: bold; font-size: 12px; }
+                 QCheckBox::indicator { width: 20px; height: 20px; }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_pos4_title">
+               <property name="text">
+                <string>Pos:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="posLabel4">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_vel4_title">
+               <property name="text">
+                <string>Vel:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="velLabel4">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad/s</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_joint4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint4_slider">
+             <item>
+              <widget class="QLabel" name="label_target4">
+               <property name="text">
+                <string>Target:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSlider" name="slider4">
+               <property name="minimum">
+                <number>-314</number>
+               </property>
+               <property name="maximum">
+                <number>314</number>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="targetLabel4">
+               <property name="minimumSize">
+                <size>
+                 <width>80</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.00 rad</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_joint4_effort">
+             <item>
+              <widget class="QLabel" name="label_effort4">
+               <property name="text">
+                <string>Effort:</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="effortBar4">
+               <property name="minimum">
+                <number>-100</number>
+               </property>
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+               <property name="textVisible">
+                <bool>false</bool>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">
+                 QProgressBar {
+                   border: 2px solid #ccc;
+                   border-radius: 5px;
+                   background-color: #ecf0f1;
+                   height: 25px;
+                 }
+                 QProgressBar::chunk {
+                   background-color: #9C27B0;
+                 }
+                </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="effortLabel4">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>0.0 Nm</string>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">font-weight: bold; background-color: #e0e0e0; padding: 3px; border-radius: 3px;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="estopButton">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>⚠ STOP ALL</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #f44336; color: white; font-size: 16px; font-weight: bold;</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="styleSheet">
+    <string notr="true">background-color: #4CAF50; color: white; font-weight: bold;</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+
