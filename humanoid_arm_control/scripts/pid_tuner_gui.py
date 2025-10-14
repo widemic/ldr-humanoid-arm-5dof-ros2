@@ -43,30 +43,33 @@ class PIDTunerGUI:
 
     def detect_controller(self):
         """Detect which controller is active"""
-        # Default to joint_trajectory_controller
-        self.controller_name = 'joint_trajectory_controller'
-
-        # Try to detect active single-joint controllers
+        # Try to detect active single-joint controllers first (preferred for isolated tuning)
         try:
             import subprocess
             result = subprocess.run(['ros2', 'control', 'list_controllers'],
                                   capture_output=True, text=True, timeout=2)
             output = result.stdout
 
-            # Check for single-joint controllers
+            # Check for single-joint controllers first (higher priority)
             for joint in self.joints:
                 controller = f'{joint}_position_controller'
                 if controller in output and 'active' in output:
                     self.controller_name = controller
-                    print(f"[INFO] Detected active controller: {self.controller_name}")
-                    break
+                    print(f"[INFO] Detected active single-joint controller: {self.controller_name}")
+                    return  # Found single-joint controller, use it!
 
+            # Fall back to multi-joint controller if no single-joint found
             if 'joint_trajectory_controller' in output and 'active' in output:
                 self.controller_name = 'joint_trajectory_controller'
-                print(f"[INFO] Using joint_trajectory_controller")
+                print(f"[INFO] Using multi-joint controller: joint_trajectory_controller")
+                return
+
+            # No active controller found - default to joint_trajectory_controller
+            print(f"[WARN] No active controller detected, defaulting to joint_trajectory_controller")
+            self.controller_name = 'joint_trajectory_controller'
 
         except Exception as e:
-            print(f"[WARN] Could not detect controller: {e}, using default")
+            print(f"[WARN] Could not detect controller: {e}, defaulting to joint_trajectory_controller")
             self.controller_name = 'joint_trajectory_controller'
 
     def setup_gui(self):
@@ -365,16 +368,16 @@ def spin_ros(node):
 def main():
     rclpy.init()
 
-    # Detect which controller is active
+    # Detect which controller is active (prioritize single-joint for isolation)
     import subprocess
-    controller_name = 'joint_trajectory_controller'  # Default
+    controller_name = 'joint_trajectory_controller'  # Default fallback
 
     try:
         result = subprocess.run(['ros2', 'control', 'list_controllers'],
                               capture_output=True, text=True, timeout=2)
         output = result.stdout
 
-        # Check for single-joint controllers
+        # Check for single-joint controllers FIRST (preferred for isolated tuning)
         joints = ['base_rotation_joint', 'shoulder_pitch_joint', 'elbow_pitch_joint',
                  'wrist_pitch_joint', 'wrist_roll_joint']
 
@@ -382,12 +385,13 @@ def main():
             controller = f'{joint}_position_controller'
             if controller in output and 'active' in output:
                 controller_name = controller
-                print(f"[INFO] Detected active controller: {controller_name}")
-                break
-
-        if 'joint_trajectory_controller' in output and 'active' in output:
-            controller_name = 'joint_trajectory_controller'
-            print(f"[INFO] Using joint_trajectory_controller")
+                print(f"[INFO] Detected active single-joint controller: {controller_name}")
+                break  # Found single-joint controller, use it!
+        else:
+            # Only check for multi-joint if no single-joint found
+            if 'joint_trajectory_controller' in output and 'active' in output:
+                controller_name = 'joint_trajectory_controller'
+                print(f"[INFO] Using multi-joint controller: joint_trajectory_controller")
 
     except Exception as e:
         print(f"[WARN] Could not detect controller: {e}, using default")

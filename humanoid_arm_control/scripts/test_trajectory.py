@@ -17,21 +17,33 @@ import time
 
 
 class TrajectoryTester(Node):
-    def __init__(self):
+    def __init__(self, controller_name='joint_trajectory_controller'):
         super().__init__('trajectory_tester')
+
+        self.controller_name = controller_name
+        self.get_logger().info(f'Using controller: {controller_name}')
+
         self._action_client = ActionClient(
             self,
             FollowJointTrajectory,
-            '/joint_trajectory_controller/follow_joint_trajectory'
+            f'/{controller_name}/follow_joint_trajectory'
         )
 
-        self.joint_names = [
-            'base_rotation_joint',
-            'shoulder_pitch_joint',
-            'elbow_pitch_joint',
-            'wrist_pitch_joint',
-            'wrist_roll_joint'
-        ]
+        # Set joint names based on controller type
+        if '_position_controller' in controller_name:
+            # Single-joint controller: extract joint name from controller name
+            # e.g., "base_rotation_joint_position_controller" -> "base_rotation_joint"
+            joint_name = controller_name.replace('_position_controller', '')
+            self.joint_names = [joint_name]
+        else:
+            # Multi-joint controller (e.g., joint_trajectory_controller)
+            self.joint_names = [
+                'base_rotation_joint',
+                'shoulder_pitch_joint',
+                'elbow_pitch_joint',
+                'wrist_pitch_joint',
+                'wrist_roll_joint'
+            ]
 
         # Subscribe to joint states to get current position
         self.current_positions = None
@@ -46,7 +58,7 @@ class TrajectoryTester(Node):
         from rcl_interfaces.srv import GetParameters
         self.get_param_client = self.create_client(
             GetParameters,
-            '/joint_trajectory_controller/get_parameters'
+            f'/{controller_name}/get_parameters'
         )
 
     def joint_state_callback(self, msg):
@@ -72,6 +84,30 @@ class TrajectoryTester(Node):
 
         self.get_logger().info(f'Current positions: {[f"{p:.3f}" for p in self.current_positions]}')
         return self.current_positions
+
+    def make_position_array(self, full_positions, joint_idx, target_value):
+        """Create position array compatible with controller type.
+
+        For single-joint controllers: returns [target_value]
+        For multi-joint controllers: returns full array with modified joint_idx
+        """
+        if len(self.joint_names) == 1:
+            # Single-joint controller: only send target joint position
+            return [target_value]
+        else:
+            # Multi-joint controller: send all positions with modified joint_idx
+            positions = full_positions.copy()
+            positions[joint_idx] = target_value
+            return positions
+
+    def make_velocity_array(self, joint_idx, velocity_value):
+        """Create velocity array compatible with controller type."""
+        if len(self.joint_names) == 1:
+            return [velocity_value]
+        else:
+            velocities = [0.0] * 5
+            velocities[joint_idx] = velocity_value
+            return velocities
 
     def get_pid_gains(self, joint_name):
         """Get current PID gains for a joint"""
@@ -125,7 +161,7 @@ class TrajectoryTester(Node):
             return False
 
     def move_to_zero(self, duration=5.0):
-        """Move all joints to zero position"""
+        """Move joint(s) to zero position"""
         self.get_logger().info('Moving to zero position...')
 
         # Get current position to calculate distance
@@ -144,8 +180,14 @@ class TrajectoryTester(Node):
         goal.trajectory.joint_names = self.joint_names
 
         point = JointTrajectoryPoint()
-        point.positions = [0.0] * 5
-        point.velocities = [0.0] * 5
+        # For single-joint controller, only send one zero position
+        if len(self.joint_names) == 1:
+            point.positions = [0.0]
+            point.velocities = [0.0]
+        else:
+            # Multi-joint: send all zeros
+            point.positions = [0.0] * 5
+            point.velocities = [0.0] * 5
         point.time_from_start = Duration(sec=int(adjusted_duration), nanosec=int((adjusted_duration % 1) * 1e9))
 
         goal.trajectory.points = [point]
@@ -163,12 +205,12 @@ class TrajectoryTester(Node):
 
         # Get current positions
         current_pos = self.get_current_positions()
+        target_pos = current_pos[joint_idx] + amplitude
 
         # Point 1: Step to current + amplitude
         point1 = JointTrajectoryPoint()
-        point1.positions = current_pos.copy()
-        point1.positions[joint_idx] = current_pos[joint_idx] + amplitude
-        point1.velocities = [0.0] * 5
+        point1.positions = self.make_position_array(current_pos, joint_idx, target_pos)
+        point1.velocities = self.make_velocity_array(joint_idx, 0.0)
         point1.time_from_start = Duration(sec=int(duration), nanosec=int((duration % 1) * 1e9))
 
         goal.trajectory.points = [point1]
@@ -189,26 +231,24 @@ class TrajectoryTester(Node):
         for cycle in range(num_cycles):
             # High
             point_high = JointTrajectoryPoint()
-            point_high.positions = current_pos.copy()
-            point_high.positions[joint_idx] = center + amplitude
-            point_high.velocities = [0.0] * 5
+            point_high.positions = self.make_position_array(current_pos, joint_idx, center + amplitude)
+            point_high.velocities = self.make_velocity_array(joint_idx, 0.0)
             t = cycle * period + half_period
             point_high.time_from_start = Duration(sec=int(t), nanosec=int((t % 1) * 1e9))
             points.append(point_high)
 
             # Low
             point_low = JointTrajectoryPoint()
-            point_low.positions = current_pos.copy()
-            point_low.positions[joint_idx] = center - amplitude
-            point_low.velocities = [0.0] * 5
+            point_low.positions = self.make_position_array(current_pos, joint_idx, center - amplitude)
+            point_low.velocities = self.make_velocity_array(joint_idx, 0.0)
             t = (cycle + 1) * period
             point_low.time_from_start = Duration(sec=int(t), nanosec=int((t % 1) * 1e9))
             points.append(point_low)
 
         # Return to center
         point_center = JointTrajectoryPoint()
-        point_center.positions = current_pos.copy()
-        point_center.velocities = [0.0] * 5
+        point_center.positions = self.make_position_array(current_pos, joint_idx, center)
+        point_center.velocities = self.make_velocity_array(joint_idx, 0.0)
         t = num_cycles * period + 1.0
         point_center.time_from_start = Duration(sec=int(t), nanosec=int((t % 1) * 1e9))
         points.append(point_center)
@@ -231,11 +271,12 @@ class TrajectoryTester(Node):
         points = []
         for i in range(num_points):
             t = i * dt
+            target_pos = center + amplitude * np.sin(2 * np.pi * frequency * t)
+            target_vel = amplitude * 2 * np.pi * frequency * np.cos(2 * np.pi * frequency * t)
+
             point = JointTrajectoryPoint()
-            point.positions = current_pos.copy()
-            point.positions[joint_idx] = center + amplitude * np.sin(2 * np.pi * frequency * t)
-            point.velocities = [0.0] * 5
-            point.velocities[joint_idx] = amplitude * 2 * np.pi * frequency * np.cos(2 * np.pi * frequency * t)
+            point.positions = self.make_position_array(current_pos, joint_idx, target_pos)
+            point.velocities = self.make_velocity_array(joint_idx, target_vel)
             point.time_from_start = Duration(sec=int(t), nanosec=int((t % 1) * 1e9))
             points.append(point)
 
@@ -260,11 +301,11 @@ class TrajectoryTester(Node):
             # Linear frequency sweep
             freq = freq_start + (freq_end - freq_start) * (t / duration)
             phase = 2 * np.pi * (freq_start * t + 0.5 * (freq_end - freq_start) * (t**2) / duration)
+            target_pos = center + amplitude * np.sin(phase)
 
             point = JointTrajectoryPoint()
-            point.positions = current_pos.copy()
-            point.positions[joint_idx] = center + amplitude * np.sin(phase)
-            point.velocities = [0.0] * 5
+            point.positions = self.make_position_array(current_pos, joint_idx, target_pos)
+            point.velocities = self.make_velocity_array(joint_idx, 0.0)
             point.time_from_start = Duration(sec=int(t), nanosec=int((t % 1) * 1e9))
             points.append(point)
 
@@ -303,7 +344,36 @@ def main():
     }
 
     rclpy.init()
-    node = TrajectoryTester()
+
+    # Detect active controller (prioritize single-joint for isolated tuning)
+    import subprocess
+    controller_name = 'joint_trajectory_controller'  # Default
+
+    try:
+        result = subprocess.run(['ros2', 'control', 'list_controllers'],
+                              capture_output=True, text=True, timeout=2)
+        output = result.stdout
+
+        # Check for single-joint controllers first
+        joints = ['base_rotation_joint', 'shoulder_pitch_joint', 'elbow_pitch_joint',
+                 'wrist_pitch_joint', 'wrist_roll_joint']
+
+        for joint in joints:
+            controller = f'{joint}_position_controller'
+            if controller in output and 'active' in output:
+                controller_name = controller
+                print(f"[INFO] Detected active single-joint controller: {controller_name}")
+                break
+        else:
+            # Only check multi-joint if no single-joint found
+            if 'joint_trajectory_controller' in output and 'active' in output:
+                controller_name = 'joint_trajectory_controller'
+                print(f"[INFO] Using multi-joint controller: joint_trajectory_controller")
+
+    except Exception as e:
+        print(f"[WARN] Could not detect controller: {e}, using default")
+
+    node = TrajectoryTester(controller_name=controller_name)
 
     node.wait_for_server()
 

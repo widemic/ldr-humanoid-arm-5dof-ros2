@@ -85,46 +85,49 @@ joint_trajectory_controller:
     # - You WILL see oscillations with high P
     # - You WILL see overshoot (not perfect tracking like position interface)
     # - Torque saturation is normal and expected
+    # STABLE BASELINE VALUES (2025-10-10) - Multi-joint full system
+    # These conservative values prevent oscillations in full system with gravity
+    # Start here and tune UP gradually, not down from aggressive extrapolated values
     gains:
       base_rotation_joint:
         # ROBSTRIDE 04: 120 Nm max, 20.94 rad/s max
-        p: 200.0           # Start conservative (10-20% of previous aggressive value)
-        d: 15.0            # D ≈ P/13 (good damping ratio)
-        i: 2.0             # Small I to handle steady-state error
+        p: 50.0            # Conservative for multi-joint stability
+        d: 0.5             # Minimal D to avoid noise amplification
+        i: 1.0             # Small I to handle steady-state error
         i_clamp: 30.0      # Limit integral windup (~25% of max torque)
-        ff_velocity_scale: 0.0  # Start at 0, increase if tracking lags velocity
+        ff_velocity_scale: 0.0
 
       shoulder_pitch_joint:
         # ROBSTRIDE 04: 120 Nm max, 20.94 rad/s max
-        # Higher gains due to gravity loading
-        p: 250.0           # Slightly higher for gravity compensation
-        d: 18.0            # D ≈ P/14
-        i: 3.0             # Slightly higher I for gravity sag
-        i_clamp: 35.0      # ~29% of max torque
+        # Fights gravity - needs higher gains than base
+        p: 60.0            # Slightly higher for gravity compensation
+        d: 1.0             # Low D, shoulder has high inertia
+        i: 2.0             # Higher I for gravity sag
+        i_clamp: 40.0      # ~33% of max torque
         ff_velocity_scale: 0.0
 
       elbow_pitch_joint:
-        # ROBSTRIDE 03: 60 Nm max, 20.42 rad/s max
-        p: 150.0           # Lower due to smaller motor
-        d: 12.0            # D ≈ P/12.5
-        i: 2.0
+        # ROBSTRIDE 03: 60 Nm max (50% of base motor)
+        p: 40.0            # Conservative for lighter motor
+        d: 0.5             # Minimal D
+        i: 1.0
         i_clamp: 20.0      # ~33% of max torque
         ff_velocity_scale: 0.0
 
       wrist_pitch_joint:
-        # ROBSTRIDE 03: 60 Nm max, 20.42 rad/s max
-        p: 120.0           # Lighter distal joint
-        d: 10.0            # D ≈ P/12
-        i: 1.5
+        # ROBSTRIDE 03: 60 Nm max
+        p: 30.0            # Light distal joint
+        d: 0.5             # Minimal D
+        i: 1.0
         i_clamp: 18.0      # ~30% of max torque
         ff_velocity_scale: 0.0
 
       wrist_roll_joint:
-        # ROBSTRIDE 02: 17 Nm max, 42.94 rad/s max (fastest joint)
-        p: 80.0            # Smallest motor, lightest load
-        d: 7.0             # D ≈ P/11.4
-        i: 1.0
-        i_clamp: 8.0       # ~47% of max torque (higher % due to small motor)
+        # ROBSTRIDE 02: 17 Nm max (14% of base motor)
+        p: 20.0            # Smallest motor, minimal load
+        d: 0.2             # Very low D for fast joint
+        i: 0.5
+        i_clamp: 6.0       # ~35% of max torque
         ff_velocity_scale: 0.0
 
     # Trajectory constraints - relaxed for effort control (not perfect tracking)
@@ -168,9 +171,9 @@ base_rotation_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       base_rotation_joint:
-        p: 200.0
-        d: 15.0
-        i: 2.0
+        p: 300.0
+        d: 40.0
+        i: 4.0
         i_clamp: 30.0
         ff_velocity_scale: 0.0
 
@@ -188,10 +191,10 @@ shoulder_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       shoulder_pitch_joint:
-        p: 250.0
-        d: 18.0
-        i: 3.0
-        i_clamp: 35.0
+        p: 350.0
+        d: 50.0
+        i: 10.0
+        i_clamp: 40.0
         ff_velocity_scale: 0.0
 
 elbow_pitch_joint_position_controller:
@@ -208,9 +211,9 @@ elbow_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       elbow_pitch_joint:
-        p: 150.0
-        d: 12.0
-        i: 2.0
+        p: 180.0
+        d: 24.0
+        i: 5.0
         i_clamp: 20.0
         ff_velocity_scale: 0.0
 
@@ -228,9 +231,9 @@ wrist_pitch_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       wrist_pitch_joint:
-        p: 120.0
-        d: 10.0
-        i: 1.5
+        p: 150.0
+        d: 20.0
+        i: 4.0
         i_clamp: 18.0
         ff_velocity_scale: 0.0
 
@@ -248,9 +251,9 @@ wrist_roll_joint_position_controller:
     allow_partial_joints_goal: false
     gains:
       wrist_roll_joint:
-        p: 80.0
-        d: 7.0
-        i: 1.0
+        p: 70.0
+        d: 10.0
+        i: 2.0
         i_clamp: 8.0
         ff_velocity_scale: 0.0
 

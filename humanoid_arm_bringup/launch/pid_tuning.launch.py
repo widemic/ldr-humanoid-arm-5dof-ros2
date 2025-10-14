@@ -3,17 +3,26 @@
 """
 PID Tuning launch file - Gazebo + ros2_control (no MoveIt).
 
-Simplified launch for PID tuning with:
+Isolated single-joint PID tuning with:
 - Gazebo physics simulation
-- ros2_control with joint_trajectory_controller
-- rqt_joint_trajectory_controller GUI
-- Event-based sequencing for reliability
+- Individual joint controllers (one active at a time)
+- Automatic controller activation based on 'joint' argument
+- No MoveIt interference
 
 Usage:
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py world_file:=empty_world.sdf
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py gazebo_gui:=false
-    ros2 launch humanoid_arm_bringup pid_tuning.launch.py launch_rqt:=false
+    # Tune joint 0 (base_rotation)
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint:=0
+
+    # Tune joint 1 (shoulder_pitch)
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint:=1
+
+    # Additional options:
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint:=0 gazebo_gui:=false
+    ros2 launch humanoid_arm_bringup pid_tuning.launch.py joint:=0 world_file:=empty_world.sdf
+
+After launch, in separate terminals:
+    ros2 run humanoid_arm_control pid_tuner_gui.py
+    python3 humanoid_arm_control/scripts/test_trajectory.py --joint 0 --type step --amplitude 0.5 --reset
 """
 
 import sys
@@ -50,8 +59,13 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'launch_rqt',
-            default_value='true',
-            description='Launch rqt_joint_trajectory_controller GUI'
+            default_value='false',
+            description='Launch rqt_joint_trajectory_controller GUI (use pid_tuner_gui.py instead)'
+        ),
+        DeclareLaunchArgument(
+            'joint',
+            default_value='0',
+            description='Joint to tune (0=base_rotation, 1=shoulder_pitch, 2=elbow_pitch, 3=wrist_pitch, 4=wrist_roll)'
         ),
     ]
 
@@ -60,6 +74,15 @@ def generate_launch_description():
     gazebo_gui = LaunchConfiguration('gazebo_gui')
     launch_rqt = LaunchConfiguration('launch_rqt')
     use_sim_time = True
+
+    # Joint controller mapping
+    joint_controllers = [
+        'base_rotation_joint_position_controller',
+        'shoulder_pitch_joint_position_controller',
+        'elbow_pitch_joint_position_controller',
+        'wrist_pitch_joint_position_controller',
+        'wrist_roll_joint_position_controller',
+    ]
 
     # ========== Gazebo ==========
     gazebo_nodes = gazebo.get_standard_gazebo_setup(
@@ -105,18 +128,26 @@ def generate_launch_description():
 
     # ========== Controllers ==========
     # Load individual joint controllers for isolated PID tuning
-    from launch_ros.actions import Node as LaunchNode
+    from launch.actions import OpaqueFunction
 
     joint_state_broadcaster_spawner = controllers.get_joint_state_broadcaster(use_sim_time)
 
-    # Individual joint controllers (all inactive initially - GUI will enable them)
-    individual_controllers = [
-        controllers.spawn_controller('base_rotation_joint_position_controller', use_sim_time, inactive=True),
-        controllers.spawn_controller('shoulder_pitch_joint_position_controller', use_sim_time, inactive=True),
-        controllers.spawn_controller('elbow_pitch_joint_position_controller', use_sim_time, inactive=True),
-        controllers.spawn_controller('wrist_pitch_joint_position_controller', use_sim_time, inactive=True),
-        controllers.spawn_controller('wrist_roll_joint_position_controller', use_sim_time, inactive=True),
-    ]
+    # Individual joint controllers - will be spawned based on 'joint' argument
+    def spawn_joint_controllers(context):
+        """Spawn controllers based on joint argument"""
+        joint_idx = int(context.launch_configurations['joint'])
+        nodes = []
+
+        for i, controller_name in enumerate(joint_controllers):
+            # Only the selected joint is active, others inactive
+            is_inactive = (i != joint_idx)
+            nodes.append(
+                controllers.spawn_controller(controller_name, use_sim_time, inactive=is_inactive)
+            )
+
+        return nodes
+
+    spawn_controllers_action = OpaqueFunction(function=spawn_joint_controllers)
 
     # ========== Event-based Sequencing ==========
     # Spawn robot after Gazebo starts (small delay for Gazebo initialization)
@@ -129,7 +160,7 @@ def generate_launch_description():
     start_controllers = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=spawn_robot,
-            on_exit=[joint_state_broadcaster_spawner] + individual_controllers
+            on_exit=[joint_state_broadcaster_spawner, spawn_controllers_action]
         )
     )
 
