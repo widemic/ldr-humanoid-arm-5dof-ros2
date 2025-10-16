@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>humanoid_arm_utilities</name>
+  <version>1.0.0</version>
+  <description>Utility nodes for 5-DOF humanoid arm</description>
+
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <url type="website">https://github.com/your-username/humanoid-arm-5dof-ros2</url>
+  <url type="bugtracker">https://github.com/your-username/humanoid-arm-5dof-ros2/issues</url>
+  <url type="repository">https://github.com/your-username/humanoid-arm-5dof-ros2</url>
+
+  <author email="your.email@example.com">Your Name</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
