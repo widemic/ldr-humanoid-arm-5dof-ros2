@@ -83,6 +83,13 @@ actuators:
       thermal_time_constant: 900  # seconds (15 min)
       max_temperature: 85.0       # °C
 
+      # Electromagnetic Brake (Virtual - for simulation)
+      has_brake: true              # Motor has electromagnetic brake
+      brake_holding_torque: 150.0  # Nm (higher than max motor torque for safety)
+      brake_engage_time: 0.05      # seconds (50ms to engage)
+      brake_release_time: 0.03     # seconds (30ms to release)
+      brake_power: 5.0             # Watts (power consumption when engaged)
+
     # PID Controller Parameters (Position Control)
     pid_position:
       p: 150.0
@@ -147,6 +154,13 @@ actuators:
       thermal_time_constant: 900
       max_temperature: 85.0
 
+      # Electromagnetic Brake (Virtual - for simulation)
+      has_brake: true
+      brake_holding_torque: 150.0  # Nm (same as base motor)
+      brake_engage_time: 0.05      # seconds
+      brake_release_time: 0.03     # seconds
+      brake_power: 5.0             # Watts
+
     pid_position:
       p: 180.0  # Higher gain due to gravity
       i: 8.0
@@ -207,6 +221,13 @@ actuators:
 
       thermal_time_constant: 720
       max_temperature: 85.0
+
+      # Electromagnetic Brake (Virtual - for simulation)
+      has_brake: true
+      brake_holding_torque: 80.0   # Nm (slightly higher than max torque)
+      brake_engage_time: 0.05      # seconds
+      brake_release_time: 0.03     # seconds
+      brake_power: 3.0             # Watts (smaller motor)
 
     pid_position:
       p: 120.0
@@ -269,6 +290,13 @@ actuators:
       thermal_time_constant: 720
       max_temperature: 85.0
 
+      # Electromagnetic Brake (Virtual - for simulation)
+      has_brake: true
+      brake_holding_torque: 80.0   # Nm (slightly higher than max torque)
+      brake_engage_time: 0.05      # seconds
+      brake_release_time: 0.03     # seconds
+      brake_power: 3.0             # Watts (smaller motor)
+
     pid_position:
       p: 100.0
       i: 5.0
@@ -329,6 +357,13 @@ actuators:
 
       thermal_time_constant: 600
       max_temperature: 85.0
+
+      # Electromagnetic Brake (Virtual - for simulation)
+      has_brake: true
+      brake_holding_torque: 25.0   # Nm (higher than max torque)
+      brake_engage_time: 0.04      # seconds (faster for small motor)
+      brake_release_time: 0.02     # seconds
+      brake_power: 2.0             # Watts (smallest motor)
 
     pid_position:
       p: 80.0

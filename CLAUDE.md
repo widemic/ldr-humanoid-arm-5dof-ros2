@@ -180,6 +180,20 @@ python3 humanoid_arm_control/scripts/test_trajectory.py --joint 0 --type step --
 
 **See [PID_README.md](PID_README.md) for complete PID tuning guide.**
 
+### Virtual Brakes (Single-Joint Tuning)
+```bash
+# Engage brakes on all joints except the one being tuned (prevents interference)
+./humanoid_arm_control/scripts/brake_joints.py --free base_rotation_joint
+
+# Release all brakes when done
+./humanoid_arm_control/scripts/brake_joints.py --release
+
+# Check brake status
+./humanoid_arm_control/scripts/brake_joints.py --status
+```
+
+**See [SINGLE_JOINT_TUNING.md](SINGLE_JOINT_TUNING.md) for complete isolation tuning guide.**
+
 ## Testing and Diagnostics
 
 ### Monitor Robot State

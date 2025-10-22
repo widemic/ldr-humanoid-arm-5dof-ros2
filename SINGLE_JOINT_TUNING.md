@@ -2,9 +2,11 @@
 
 **Problem:** When tuning one joint with the full trajectory controller, other joints may oscillate or interfere with your measurements.
 
-**Solution:** Use **individual joint controllers** to isolate each joint completely.
+**Solutions:**
+1. **Individual joint controllers** - Isolate each joint by only powering one controller
+2. **Virtual brakes** - Lock non-tuning joints with electromagnetic brake simulation (NEW!)
 
-## Quick Start: Isolate a Single Joint
+## Quick Start: Method 1 - Individual Controllers (Original Method)
 
 ### Step 1: Launch System (Normal)
 
@@ -44,6 +46,68 @@ python3 humanoid_arm_control/scripts/test_trajectory.py \
 ```
 
 **Now:** Only base_rotation_joint moves. All other joints are **unpowered** and won't interfere!
+
+---
+
+## Quick Start: Method 2 - Virtual Brakes (NEW!)
+
+**Better approach:** Keep all controllers active but lock non-tuning joints with virtual brakes.
+
+### Step 1: Launch Gazebo System
+
+```bash
+ros2 launch humanoid_arm_bringup full_system.launch.py
+```
+
+### Step 2: Engage Brakes on Non-Tuning Joints
+
+```bash
+# Example: Tune base_rotation_joint, brake all others
+cd ~/Documents/GitHub/ldr-humanoid-arm-5dof-ros2
+./humanoid_arm_control/scripts/brake_joints.py --free base_rotation_joint
+```
+
+**Output:**
+```
+🔒 Engaging brakes on all joints except: ['base_rotation_joint']
+   Free joints can be tuned without interference
+
+  Skipping base_rotation_joint (free for tuning)
+  Engaging brake on shoulder_pitch_joint (damping: 0.1 → 80.0)
+  Engaging brake on elbow_pitch_joint (damping: 0.1 → 40.0)
+  Engaging brake on wrist_pitch_joint (damping: 0.1 → 30.0)
+  Engaging brake on wrist_roll_joint (damping: 0.1 → 20.0)
+
+✓ Engaged 4 brakes
+```
+
+### Step 3: Tune with PID GUI (Now Isolated!)
+
+```bash
+ros2 run humanoid_arm_control pid_tuner_gui.py
+```
+
+**Advantage:** Other joints are **locked by brakes**, not unpowered. No oscillation, no drooping!
+
+### Step 4: Test Trajectory
+
+```bash
+python3 humanoid_arm_control/scripts/test_trajectory.py \
+  --joint 0 --type step --amplitude 0.5 --reset
+```
+
+### Step 5: Release Brakes When Done
+
+```bash
+./humanoid_arm_control/scripts/brake_joints.py --release
+```
+
+**Why this is better:**
+- ✅ No unpowered joints (shoulder won't droop under gravity)
+- ✅ Works with any controller (even multi-joint)
+- ✅ No controller switching needed
+- ✅ Prevents oscillation from coupled dynamics
+- ✅ Closer to real hardware behavior (motors with brakes)
 
 ---
 
@@ -387,4 +451,52 @@ The PID tuner GUI automatically detects the **active** controller:
 
 ---
 
-Good luck with single-joint tuning! This method gives you **complete isolation** and **clean data** for each joint. 🎯
+---
+
+## Comparison: Individual Controllers vs Virtual Brakes
+
+| Feature | Individual Controllers | Virtual Brakes |
+|---------|----------------------|----------------|
+| **Controller switching** | Required (stop/start) | Not required |
+| **Gravity handling** | Joints droop when unpowered | Brakes hold position |
+| **Setup complexity** | Medium (controller commands) | Easy (one script) |
+| **Interference prevention** | ✅ Complete (joints unpowered) | ✅ Complete (high damping) |
+| **Works in simulation** | ✅ Yes | ✅ Yes (Gazebo only) |
+| **Works on real hardware** | ✅ Yes | ⚠️ Only if motors have brakes |
+| **Multi-joint tuning** | ❌ No (only one active) | ✅ Yes (brake subset) |
+| **Realistic for hardware** | ❌ (motors always powered) | ✅ (simulates real brakes) |
+
+**Recommendation:**
+- **For simulation:** Use **Virtual Brakes** (Method 2) - easier and more realistic
+- **For real hardware prep:** Use both methods to understand behavior
+- **When shoulder droops:** Use **Virtual Brakes** (locks shoulder without power)
+
+---
+
+## Virtual Brake Technical Details
+
+**How it works:**
+- Brakes are simulated by increasing Gazebo joint damping coefficient
+- Normal damping: `0.1 Nm·s/rad` (from URDF)
+- Brake damping: `20-80 Nm·s/rad` (proportional to motor size)
+- Torque applied: `τ_brake = -damping * velocity`
+
+**Brake specifications (from actuator_specs.yaml):**
+
+| Joint | Normal Damping | Brake Damping | Holding Torque | Engage Time |
+|-------|----------------|---------------|----------------|-------------|
+| base_rotation | 0.1 | 50.0 | 150 Nm | 50ms |
+| shoulder_pitch | 0.1 | 80.0 | 150 Nm | 50ms |
+| elbow_pitch | 0.1 | 40.0 | 80 Nm | 50ms |
+| wrist_pitch | 0.1 | 30.0 | 80 Nm | 50ms |
+| wrist_roll | 0.1 | 20.0 | 25 Nm | 40ms |
+
+**Brake characteristics:**
+- **Backdrivable:** No (high damping prevents motion)
+- **Power consumption:** 2-5W when engaged (virtual only)
+- **Response time:** 30-50ms
+- **Holding torque:** Exceeds motor max torque for safety
+
+---
+
+Good luck with single-joint tuning! Both methods give you **complete isolation** and **clean data** for each joint. 🎯
