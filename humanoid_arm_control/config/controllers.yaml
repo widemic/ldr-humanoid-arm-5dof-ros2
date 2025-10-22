@@ -34,6 +34,10 @@ controller_manager:
     arm_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 
+    # Forward Effort Controller (for virtual brakes)
+    forward_effort_controller:
+      type: forward_command_controller/ForwardCommandController
+
     # Force Torque Sensor Broadcaster (for contact sensing)
     tcp_force_torque_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
@@ -286,6 +290,17 @@ arm_velocity_controller:
     state_interfaces:
       - position
       - velocity
+
+# Forward Effort Controller (for virtual brakes)
+forward_effort_controller:
+  ros__parameters:
+    joints:
+      - base_rotation_joint
+      - shoulder_pitch_joint
+      - elbow_pitch_joint
+      - wrist_pitch_joint
+      - wrist_roll_joint
+    interface_name: effort
 
 # Force Torque Sensor Broadcasters
 tcp_force_torque_broadcaster:
