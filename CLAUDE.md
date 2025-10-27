@@ -535,6 +535,25 @@ Joint dynamics are defined in `humanoid_arm_5dof_macro.urdf.xacro`:
 
 ## Common Issues
 
+### Clock Synchronization Error on Fresh Clone
+
+**Problem:** Controller spawning fails with clock errors after cloning repo on a new system
+
+**Solution:** The repository includes a fix with increased timing delays. See [CLOCK_SYNC_FIX.md](CLOCK_SYNC_FIX.md) for details.
+
+**Quick fix:** If you still see errors, increase controller spawn delay in [full_system.launch.py:108](humanoid_arm_bringup/launch/full_system.launch.py#L108):
+```python
+controllers_delayed = TimerAction(
+    period=10.0,  # Increase from 8.0 for slower systems
+    actions=controller_nodes
+)
+```
+
+The fix includes:
+- Proper `use_sim_time` parameter handling in controller spawners
+- Increased delays for Gazebo clock stabilization (8s for controllers, 12s for MoveIt, 14s for RViz)
+- Ensures `/clock` topic is publishing before controllers spawn
+
 ### Mock Hardware vs. Gazebo Confusion
 
 **Problem:** "PID tuning doesn't show oscillations"

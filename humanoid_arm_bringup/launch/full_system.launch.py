@@ -105,7 +105,7 @@ def generate_launch_description():
     )
 
     controllers_delayed = TimerAction(
-        period=5.0,
+        period=8.0,  # Increased from 5.0 to allow Gazebo clock to stabilize
         actions=controller_nodes
     )
 
@@ -122,7 +122,7 @@ def generate_launch_description():
     )
 
     moveit_delayed = TimerAction(
-        period=7.0,
+        period=12.0,  # Increased to wait for controllers
         actions=[moveit_launch]
     )
 
@@ -135,7 +135,7 @@ def generate_launch_description():
     )
 
     rviz_delayed = TimerAction(
-        period=9.0,
+        period=14.0,  # Increased to wait for MoveIt
         actions=[rviz_node]
     )
 

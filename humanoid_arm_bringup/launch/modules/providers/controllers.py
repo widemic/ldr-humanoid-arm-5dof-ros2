@@ -31,11 +31,14 @@ def spawn_controller(controller_name: str,
     if inactive:
         args.append('--inactive')
 
+    # Add --ros-args parameter for use_sim_time to ensure proper clock handling
+    if use_sim_time:
+        args.extend(['--ros-args', '-p', 'use_sim_time:=true'])
+
     return Node(
         package='controller_manager',
         executable='spawner',
         arguments=args,
-        parameters=[{'use_sim_time': use_sim_time}],
     )
 
 
